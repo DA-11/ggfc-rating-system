@@ -126,6 +126,17 @@
     <!-- Toast / Popover container -->
     <div id="toast-container"></div>
 
+    <!-- Custom Confirm Modal -->
+    <div id="confirm-modal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <p id="confirm-message">Are you sure?</p>
+            <div class="modal-actions">
+                <button class="secondary" onclick="closeConfirmModal(false)">Cancel</button>
+                <button class="btn-primary" id="confirm-ok-btn">OK</button>
+            </div>
+        </div>
+    </div>
+
     <script src="firebase-config.js"></script>
     <script src="app.js"></script>
 </body>
