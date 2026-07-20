@@ -446,7 +446,6 @@ input[type="range"]::-webkit-slider-thumb {
     to { opacity: 0; transform: translateX(40px); }
 }
 
-/* Avatar upload */
 .avatar-upload {
     display: flex;
     align-items: center;
@@ -495,6 +494,48 @@ input[type="range"]::-webkit-slider-thumb {
 .upload-btn:hover {
     border-color: var(--primary);
     color: var(--primary);
+}
+
+/* Custom Modal */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.modal-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.6rem;
+    max-width: 360px;
+    width: 90%;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+
+.modal-box p {
+    font-size: 1.05rem;
+    margin-bottom: 1.4rem;
+    line-height: 1.45;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 0.8rem;
+    justify-content: flex-end;
+}
+
+.btn-danger {
+    background: var(--danger) !important;
+    color: white !important;
+}
+
+.btn-danger:hover {
+    background: #e04a66 !important;
 }
 
 @media (max-width: 600px) {
