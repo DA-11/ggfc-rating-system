@@ -14,81 +14,107 @@
     <div id="app">
         <!-- Navigation -->
         <nav>
-            <h1>GG FC Ratings</h1>
-            <div id="nav-buttons">
-                <!-- Dynamic -->
+            <div class="nav-brand">
+                <span class="logo">⚽</span>
+                <h1>GG FC Ratings</h1>
             </div>
+            <div id="nav-buttons"></div>
         </nav>
 
         <!-- LOGIN VIEW -->
-        <div id="login-view" class="section">
-            <h2>Login</h2>
-            <input type="email" id="login-email" placeholder="Email" required>
-            <input type="password" id="login-password" placeholder="Password" required>
-            <button onclick="login()">Login</button>
-            <p style="margin-top:1.5rem;">Don't have an account? <a href="#" onclick="showRegisterView(); return false;">Register here</a></p>
+        <div id="login-view" class="section auth-card">
+            <h2>Welcome back</h2>
+            <p class="subtitle">Sign in to rate players and view rankings</p>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="login-email" placeholder="you@example.com" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="login-password" placeholder="••••••••" required>
+            </div>
+            <button class="btn-primary full-width" onclick="login()">Login</button>
+            <p class="switch-auth">Don't have an account? <a href="#" onclick="showRegisterView(); return false;">Register here</a></p>
         </div>
 
         <!-- REGISTER VIEW -->
-        <div id="register-view" class="section hidden">
-            <h2>Register as Player</h2>
-            
-            <label>Email *</label>
-            <input type="email" id="reg-email" placeholder="Email" required>
+        <div id="register-view" class="section auth-card hidden">
+            <h2>Create Account</h2>
+            <p class="subtitle">Join GG FC and start rating players</p>
 
-            <label>Password *</label>
-            <input type="password" id="reg-password" placeholder="Password (min 6 chars)" required>
-
-            <label>Full Name *</label>
-            <input type="text" id="reg-fullName" placeholder="e.g. John Smith" required>
-
-            <label>Nickname (optional)</label>
-            <input type="text" id="reg-nickname" placeholder="e.g. Johnny">
-
-            <label>Preferred Foot *</label>
-            <select id="reg-preferredFoot" required>
-                <option value="">Select...</option>
-                <option value="Right">Right</option>
-                <option value="Left">Left</option>
-                <option value="Both">Both</option>
-            </select>
-
-            <label>Years Playing Football *</label>
-            <input type="number" id="reg-yearsPlaying" min="0" max="50" placeholder="e.g. 5" required>
-
-            <label>About Me</label>
-            <textarea id="reg-aboutMe" placeholder="Tell us about your playing style..."></textarea>
-
-            <label>Positions you can play * (select at least one)</label>
-            <div id="reg-positions-container">
-                <!-- Filled by JS -->
+            <div class="form-group">
+                <label>Email *</label>
+                <input type="email" id="reg-email" placeholder="you@example.com" required>
+            </div>
+            <div class="form-group">
+                <label>Password *</label>
+                <input type="password" id="reg-password" placeholder="Min 6 characters" required>
+            </div>
+            <div class="form-group">
+                <label>Full Name *</label>
+                <input type="text" id="reg-fullName" placeholder="e.g. John Smith" required>
+            </div>
+            <div class="form-group">
+                <label>Nickname <span class="optional">(optional)</span></label>
+                <input type="text" id="reg-nickname" placeholder="e.g. Johnny">
+            </div>
+            <div class="form-group">
+                <label>Preferred Foot *</label>
+                <select id="reg-preferredFoot" required>
+                    <option value="">Select...</option>
+                    <option value="Right">Right</option>
+                    <option value="Left">Left</option>
+                    <option value="Both">Both</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Years Playing Football *</label>
+                <input type="number" id="reg-yearsPlaying" min="0" max="50" placeholder="e.g. 5" required>
+            </div>
+            <div class="form-group">
+                <label>About Me <span class="optional">(optional)</span></label>
+                <textarea id="reg-aboutMe" placeholder="Tell us about your playing style..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Positions you can play * <span class="hint">Select at least one</span></label>
+                <div id="reg-positions-container"></div>
+            </div>
+            <div class="form-group">
+                <label>Primary Position *</label>
+                <select id="reg-primaryPosition" required>
+                    <option value="">Select positions first...</option>
+                </select>
             </div>
 
-            <label>Primary Position *</label>
-            <select id="reg-primaryPosition" required>
-                <option value="">Select positions first...</option>
-            </select>
-
-            <button onclick="register()">Create Account</button>
-            <p style="margin-top:1.5rem;">Already have an account? <a href="#" onclick="showLoginView(); return false;">Login here</a></p>
+            <button class="btn-primary full-width" onclick="register()">Create Account</button>
+            <p class="switch-auth">Already have an account? <a href="#" onclick="showLoginView(); return false;">Login here</a></p>
         </div>
 
         <!-- MAIN APP (logged in) -->
         <div id="main-app" class="hidden">
             <div id="home-view">
-                <div id="welcome-section"></div>
+                <div id="welcome-section" class="welcome-card"></div>
                 
-                <div class="menu-buttons" style="display:flex; gap:1rem; margin:1.5rem 0; flex-wrap:wrap;">
-                    <button onclick="showRatePlayers()">Rate a Player</button>
-                    <button onclick="showLeaderboard()">Leaderboard</button>
+                <div class="menu-buttons">
+                    <button class="btn-menu" onclick="showRatePlayers()">
+                        <span class="btn-icon">⭐</span>
+                        Rate a Player
+                    </button>
+                    <button class="btn-menu" onclick="showLeaderboard()">
+                        <span class="btn-icon">🏆</span>
+                        Leaderboard
+                    </button>
                 </div>
 
-                <div id="content-area">
-                    <!-- Rate list or Leaderboard will be injected here -->
+                <div id="content-area" class="content-card">
+                    <!-- Rate list or Leaderboard injected here -->
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Toast / Popover container -->
+    <div id="toast-container"></div>
 
     <script src="firebase-config.js"></script>
     <script src="app.js"></script>
