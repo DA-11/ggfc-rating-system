@@ -31,7 +31,6 @@ function showToast(message, type = 'info') {
 
     container.appendChild(toast);
 
-    // Auto remove after 3.5s
     setTimeout(() => {
         toast.classList.add('hiding');
         setTimeout(() => toast.remove(), 250);
@@ -46,12 +45,10 @@ auth.onAuthStateChanged(async (user) => {
         document.getElementById('register-view').classList.add('hidden');
         document.getElementById('main-app').classList.remove('hidden');
 
-        // Logout button
         document.getElementById('nav-buttons').innerHTML = `
             <button onclick="logout()">Logout</button>
         `;
 
-        // Check profile exists
         const doc = await db.collection('players').doc(user.uid).get();
         if (!doc.exists || !doc.data().profileComplete) {
             showToast('Profile incomplete. Please contact admin.', 'error');
@@ -60,7 +57,7 @@ auth.onAuthStateChanged(async (user) => {
         }
 
         loadWelcome();
-        showRatePlayers(); // default view
+        showRatePlayers();
     } else {
         currentUser = null;
         document.getElementById('login-view').classList.remove('hidden');
@@ -98,6 +95,29 @@ async function login() {
     } catch (error) {
         showToast(error.message, 'error');
     }
+}
+
+// ========== PROFILE PIC PREVIEW ==========
+function previewProfilePic(event) {
+    const file = event.target.files[0];
+    const preview = document.getElementById('avatar-preview');
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+        showToast('Please select an image file', 'error');
+        return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+        showToast('Image must be smaller than 5MB', 'error');
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+    };
+    reader.readAsDataURL(file);
 }
 
 // ========== REGISTER ==========
@@ -142,7 +162,6 @@ async function register() {
     const primaryPosition = document.getElementById('reg-primaryPosition').value;
     const selectedPositions = Array.from(document.querySelectorAll('input[name="reg-positions"]:checked')).map(cb => cb.value);
 
-    // Validation
     if (!email || !password) { showToast('Email and Password are required', 'error'); return; }
     if (password.length < 6) { showToast('Password must be at least 6 characters', 'error'); return; }
     if (!fullName) { showToast('Full Name is required', 'error'); return; }
@@ -159,6 +178,21 @@ async function register() {
         const uid = userCredential.user.uid;
         const playerId = await generatePlayerId();
 
+        // Try to upload profile picture (optional – fails gracefully)
+        let profilePicUrl = null;
+        const fileInput = document.getElementById('reg-profilePic');
+        if (fileInput && fileInput.files && fileInput.files[0]) {
+            try {
+                const file = fileInput.files[0];
+                const storageRef = storage.ref(`profile-pictures/${uid}`);
+                const snapshot = await storageRef.put(file);
+                profilePicUrl = await snapshot.ref.getDownloadURL();
+            } catch (storageError) {
+                console.warn('Profile picture upload failed (Storage may not be enabled yet):', storageError);
+                showToast('Account created, but profile picture could not be uploaded. You can add it later.', 'info');
+            }
+        }
+
         const playerData = {
             playerId: playerId,
             fullName: fullName,
@@ -169,6 +203,7 @@ async function register() {
             positions: selectedPositions,
             primaryPosition: primaryPosition,
             email: email,
+            profilePicUrl: profilePicUrl,
             isActive: true,
             profileComplete: true,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -193,9 +228,18 @@ async function loadWelcome() {
     const doc = await db.collection('players').doc(currentUser.uid).get();
     if (doc.exists) {
         const profile = doc.data();
+        const avatarHtml = profile.profilePicUrl
+            ? `<img src="${profile.profilePicUrl}" alt="Profile" style="width:56px;height:56px;border-radius:50%;object-fit:cover;margin-right:1rem;">`
+            : `<div style="width:56px;height:56px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-right:1rem;">⚽</div>`;
+
         document.getElementById('welcome-section').innerHTML = `
-            <h2>Welcome, ${profile.fullName}${profile.nickname ? ' (' + profile.nickname + ')' : ''}</h2>
-            <p>Primary Position: <strong>${profile.primaryPosition || 'N/A'}</strong> • Preferred Foot: <strong>${profile.preferredFoot || 'N/A'}</strong></p>
+            <div style="display:flex;align-items:center;">
+                ${avatarHtml}
+                <div>
+                    <h2>Welcome, ${profile.fullName}${profile.nickname ? ' (' + profile.nickname + ')' : ''}</h2>
+                    <p>Primary Position: <strong>${profile.primaryPosition || 'N/A'}</strong> • Preferred Foot: <strong>${profile.preferredFoot || 'N/A'}</strong></p>
+                </div>
+            </div>
         `;
     }
 }
@@ -217,10 +261,18 @@ async function showRatePlayers() {
             hasPlayers = true;
             const div = document.createElement('div');
             div.className = 'player-card';
+
+            const avatar = player.profilePicUrl
+                ? `<img src="${player.profilePicUrl}" alt="" style="width:42px;height:42px;border-radius:50%;object-fit:cover;margin-right:0.8rem;">`
+                : `<div style="width:42px;height:42px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:1.1rem;margin-right:0.8rem;">⚽</div>`;
+
             div.innerHTML = `
-                <div>
-                    <h3>${player.fullName}${player.nickname ? ' (' + player.nickname + ')' : ''}</h3>
-                    <small>${player.primaryPosition || 'N/A'} • ${player.preferredFoot || ''} foot</small>
+                <div style="display:flex;align-items:center;">
+                    ${avatar}
+                    <div>
+                        <h3>${player.fullName}${player.nickname ? ' (' + player.nickname + ')' : ''}</h3>
+                        <small>${player.primaryPosition || 'N/A'} • ${player.preferredFoot || ''} foot</small>
+                    </div>
                 </div>
                 <button onclick="ratePlayer('${player.id}')">Rate</button>
             `;
@@ -406,7 +458,6 @@ async function showLeaderboard() {
 
 // ========== LOGOUT ==========
 function logout() {
-    // Simple confirm still uses native for now (or we can make a custom modal later)
     if (confirm('Are you sure you want to logout?')) {
         auth.signOut();
         showToast('Logged out', 'info');
