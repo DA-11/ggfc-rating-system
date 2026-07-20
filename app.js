@@ -11,6 +11,33 @@ const ALL_POSITIONS = [
     { group: "Attack", positions: ["LW", "RW", "CF", "ST", "SS"] }
 ];
 
+// ========== TOAST / POPOVER SYSTEM ==========
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const icons = {
+        success: '✓',
+        error: '✕',
+        info: 'ℹ'
+    };
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+        <span class="toast-icon">${icons[type] || icons.info}</span>
+        <span class="toast-message">${message}</span>
+    `;
+
+    container.appendChild(toast);
+
+    // Auto remove after 3.5s
+    setTimeout(() => {
+        toast.classList.add('hiding');
+        setTimeout(() => toast.remove(), 250);
+    }, 3500);
+}
+
 // ========== AUTH STATE ==========
 auth.onAuthStateChanged(async (user) => {
     if (user) {
@@ -27,8 +54,7 @@ auth.onAuthStateChanged(async (user) => {
         // Check profile exists
         const doc = await db.collection('players').doc(user.uid).get();
         if (!doc.exists || !doc.data().profileComplete) {
-            // Should not happen with new flow, but fallback
-            alert('Profile incomplete. Please contact admin.');
+            showToast('Profile incomplete. Please contact admin.', 'error');
             auth.signOut();
             return;
         }
@@ -62,23 +88,24 @@ async function login() {
     const password = document.getElementById('login-password').value;
 
     if (!email || !password) {
-        alert('Please enter email and password');
+        showToast('Please enter email and password', 'error');
         return;
     }
 
     try {
         await auth.signInWithEmailAndPassword(email, password);
+        showToast('Logged in successfully', 'success');
     } catch (error) {
-        alert(error.message);
+        showToast(error.message, 'error');
     }
 }
 
-// ========== REGISTER (with full details) ==========
+// ========== REGISTER ==========
 function renderRegisterPositions() {
     const container = document.getElementById('reg-positions-container');
     let html = '';
     ALL_POSITIONS.forEach(group => {
-        html += `<div style="margin-bottom:8px;"><strong>${group.group}</strong></div><div class="checkbox-group">`;
+        html += `<div style="margin-bottom:8px;"><strong style="color:var(--text-muted);font-size:0.8rem;">${group.group}</strong></div><div class="checkbox-group">`;
         group.positions.forEach(pos => {
             html += `
                 <label>
@@ -116,26 +143,22 @@ async function register() {
     const selectedPositions = Array.from(document.querySelectorAll('input[name="reg-positions"]:checked')).map(cb => cb.value);
 
     // Validation
-    if (!email || !password) { alert('Email and Password are required'); return; }
-    if (password.length < 6) { alert('Password must be at least 6 characters'); return; }
-    if (!fullName) { alert('Full Name is required'); return; }
-    if (!preferredFoot) { alert('Please select Preferred Foot'); return; }
-    if (isNaN(yearsPlaying) || yearsPlaying < 0) { alert('Please enter valid Years Playing'); return; }
-    if (selectedPositions.length === 0) { alert('Please select at least one position'); return; }
+    if (!email || !password) { showToast('Email and Password are required', 'error'); return; }
+    if (password.length < 6) { showToast('Password must be at least 6 characters', 'error'); return; }
+    if (!fullName) { showToast('Full Name is required', 'error'); return; }
+    if (!preferredFoot) { showToast('Please select Preferred Foot', 'error'); return; }
+    if (isNaN(yearsPlaying) || yearsPlaying < 0) { showToast('Please enter valid Years Playing', 'error'); return; }
+    if (selectedPositions.length === 0) { showToast('Please select at least one position', 'error'); return; }
     if (!primaryPosition || !selectedPositions.includes(primaryPosition)) {
-        alert('Primary Position must be one of the selected positions');
+        showToast('Primary Position must be one of the selected positions', 'error');
         return;
     }
 
     try {
-        // Create Auth account
         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
         const uid = userCredential.user.uid;
-
-        // Generate Player ID
         const playerId = await generatePlayerId();
 
-        // Create full profile
         const playerData = {
             playerId: playerId,
             fullName: fullName,
@@ -152,11 +175,9 @@ async function register() {
         };
 
         await db.collection('players').doc(uid).set(playerData);
-
-        alert('Registration successful! Welcome to GG FC.');
-        // onAuthStateChanged will handle the rest
+        showToast('Registration successful! Welcome to GG FC.', 'success');
     } catch (error) {
-        alert(error.message);
+        showToast(error.message, 'error');
     }
 }
 
@@ -167,7 +188,7 @@ async function generatePlayerId() {
     return `GG${count.toString().padStart(3, '0')}`;
 }
 
-// ========== WELCOME (no Player ID shown) ==========
+// ========== WELCOME ==========
 async function loadWelcome() {
     const doc = await db.collection('players').doc(currentUser.uid).get();
     if (doc.exists) {
@@ -182,7 +203,7 @@ async function loadWelcome() {
 // ========== RATE PLAYERS VIEW ==========
 async function showRatePlayers() {
     const content = document.getElementById('content-area');
-    content.innerHTML = '<h3>Select a player to rate</h3><div id="players-list-container">Loading...</div>';
+    content.innerHTML = '<h3 style="margin-bottom:1rem;">Select a player to rate</h3><div id="players-list-container">Loading...</div>';
 
     const snapshot = await db.collection('players').where('isActive', '==', true).get();
     players = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -208,11 +229,11 @@ async function showRatePlayers() {
     });
 
     if (!hasPlayers) {
-        container.innerHTML = '<p>No other players registered yet.</p>';
+        container.innerHTML = '<p style="color:var(--text-muted);">No other players registered yet.</p>';
     }
 }
 
-// ========== RATING FORM (no Player ID, no live overall shown) ==========
+// ========== RATING FORM ==========
 async function ratePlayer(playerId) {
     currentRatingPlayerId = playerId;
     const player = players.find(p => p.id === playerId);
@@ -222,9 +243,9 @@ async function ratePlayer(playerId) {
     
     let html = `
         <div>
-            <h2>Rate ${player.fullName}${player.nickname ? ' (' + player.nickname + ')' : ''}</h2>
-            <div>
-                <label>Position you are rating for:</label>
+            <h2 style="margin-bottom:1rem;">Rate ${player.fullName}${player.nickname ? ' (' + player.nickname + ')' : ''}</h2>
+            <div class="form-group">
+                <label>Position you are rating for</label>
                 <select id="rating-position" onchange="loadRatingForm()">
     `;
 
@@ -234,10 +255,13 @@ async function ratePlayer(playerId) {
     });
     html += `</select></div>`;
 
-    html += `<div id="rating-form" style="margin-top: 20px;"></div>`;
-    html += `<button onclick="submitRating()">Submit Rating</button>`;
-    html += `<button class="secondary" onclick="showRatePlayers()">Cancel</button>`;
-    html += `</div>`;
+    html += `<div id="rating-form"></div>`;
+    html += `
+        <div style="margin-top:1.5rem; display:flex; gap:0.8rem;">
+            <button class="btn-primary" onclick="submitRating()">Submit Rating</button>
+            <button class="secondary" onclick="showRatePlayers()">Cancel</button>
+        </div>
+    `;
 
     content.innerHTML = html;
     loadRatingForm();
@@ -252,20 +276,19 @@ function loadRatingForm() {
         ['Shot Stopping', 'Handling', 'Reflexes', 'Positioning', 'Communication', 'Distribution', 'Aerial Ability', 'One-on-One Ability', 'Decision Making', 'Consistency'] :
         ['Ball Control', 'Pace', 'Passing', 'Dribbling', 'Shooting', 'Defending', 'Physicality', 'Stamina', 'Game IQ', 'Teamwork'];
 
-    let formHTML = `<h3>Rating for ${position}</h3>`;
+    let formHTML = `<h3 style="margin:1.2rem 0 0.5rem; font-size:1.1rem;">Rating for ${position}</h3>`;
     
     params.forEach(param => {
         const id = param.toLowerCase().replace(/\s+/g, '');
         formHTML += `
             <div>
-                <label>${param} (1-10):</label>
+                <label>${param}</label>
                 <input type="range" id="${id}" min="1" max="10" value="5" oninput="updateSliderValue('${id}')">
                 <span id="${id}-value">5</span>
             </div>
         `;
     });
 
-    // No overall shown on the form as requested
     formContainer.innerHTML = formHTML;
 }
 
@@ -306,30 +329,25 @@ async function submitRating() {
 
     try {
         await db.collection('ratings').add(ratingData);
-        alert('Rating submitted successfully!');
+        showToast('Rating submitted successfully!', 'success');
         showRatePlayers();
     } catch (error) {
-        alert('Error: ' + error.message);
+        showToast(error.message, 'error');
     }
 }
 
 // ========== LEADERBOARD ==========
 async function showLeaderboard() {
     const content = document.getElementById('content-area');
-    content.innerHTML = '<h3>Overall Leaderboard</h3><p>Loading rankings...</p>';
+    content.innerHTML = '<h3 style="margin-bottom:1rem;">Overall Leaderboard</h3><p style="color:var(--text-muted);">Loading rankings...</p>';
 
-    // Get all active players
     const playersSnap = await db.collection('players').where('isActive', '==', true).get();
     const allPlayers = playersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-    // Get all ratings
     const ratingsSnap = await db.collection('ratings').get();
     const allRatings = ratingsSnap.docs.map(doc => doc.data());
 
-    // Calculate average overall per player (only from active raters)
-    // First get active rater IDs
     const activeRaterIds = new Set(allPlayers.map(p => p.id));
-
     const playerAverages = {};
 
     allPlayers.forEach(p => {
@@ -344,13 +362,11 @@ async function showLeaderboard() {
     });
 
     allRatings.forEach(r => {
-        // Only count ratings from active players
         if (activeRaterIds.has(r.ratedByPlayerId) && playerAverages[r.ratedPlayerId]) {
             playerAverages[r.ratedPlayerId].ratings.push(r.overall || 0);
         }
     });
 
-    // Compute averages
     Object.keys(playerAverages).forEach(id => {
         const data = playerAverages[id];
         if (data.ratings.length > 0) {
@@ -360,33 +376,29 @@ async function showLeaderboard() {
         }
     });
 
-    // Sort highest to lowest
     const ranked = Object.values(playerAverages)
         .filter(p => p.count > 0)
         .sort((a, b) => b.average - a.average);
 
-    let html = '<h3>Overall Leaderboard</h3>';
+    let html = '<h3 style="margin-bottom:1rem;">Overall Leaderboard</h3>';
     
     if (ranked.length === 0) {
-        html += '<p>No ratings submitted yet.</p>';
+        html += '<p style="color:var(--text-muted);">No ratings submitted yet.</p>';
     } else {
-        html += '<div style="margin-top:1rem;">';
         ranked.forEach((p, index) => {
             html += `
                 <div class="player-card">
-                    <div>
-                        <strong>#${index + 1}</strong> 
-                        ${p.fullName}${p.nickname ? ' (' + p.nickname + ')' : ''}
-                        <br>
-                        <small>${p.primaryPosition || ''} • ${p.count} rating${p.count > 1 ? 's' : ''}</small>
+                    <div style="display:flex; align-items:center; gap:0.8rem;">
+                        <span class="rank-badge">#${index + 1}</span>
+                        <div>
+                            <h3>${p.fullName}${p.nickname ? ' (' + p.nickname + ')' : ''}</h3>
+                            <small>${p.primaryPosition || ''} • ${p.count} rating${p.count > 1 ? 's' : ''}</small>
+                        </div>
                     </div>
-                    <div style="font-size:1.4rem; font-weight:bold; color:#0f3460;">
-                        ${p.average}
-                    </div>
+                    <div class="score-value">${p.average}</div>
                 </div>
             `;
         });
-        html += '</div>';
     }
 
     content.innerHTML = html;
@@ -394,7 +406,9 @@ async function showLeaderboard() {
 
 // ========== LOGOUT ==========
 function logout() {
+    // Simple confirm still uses native for now (or we can make a custom modal later)
     if (confirm('Are you sure you want to logout?')) {
         auth.signOut();
+        showToast('Logged out', 'info');
     }
 }
