@@ -16,31 +16,77 @@
         <nav>
             <h1>GG FC Ratings</h1>
             <div id="nav-buttons">
-                <!-- Dynamic buttons injected by JS -->
+                <!-- Dynamic -->
             </div>
         </nav>
 
-        <!-- Auth Section -->
-        <div id="auth-section" class="section">
-            <h2>Login / Register</h2>
-            <div id="login-form">
-                <input type="email" id="email" placeholder="Email" required>
-                <input type="password" id="password" placeholder="Password" required>
-                <button onclick="login()">Login</button>
-                <button onclick="register()">Register</button>
+        <!-- LOGIN VIEW -->
+        <div id="login-view" class="section">
+            <h2>Login</h2>
+            <input type="email" id="login-email" placeholder="Email" required>
+            <input type="password" id="login-password" placeholder="Password" required>
+            <button onclick="login()">Login</button>
+            <p style="margin-top:1.5rem;">Don't have an account? <a href="#" onclick="showRegisterView(); return false;">Register here</a></p>
+        </div>
+
+        <!-- REGISTER VIEW -->
+        <div id="register-view" class="section hidden">
+            <h2>Register as Player</h2>
+            
+            <label>Email *</label>
+            <input type="email" id="reg-email" placeholder="Email" required>
+
+            <label>Password *</label>
+            <input type="password" id="reg-password" placeholder="Password (min 6 chars)" required>
+
+            <label>Full Name *</label>
+            <input type="text" id="reg-fullName" placeholder="e.g. John Smith" required>
+
+            <label>Nickname (optional)</label>
+            <input type="text" id="reg-nickname" placeholder="e.g. Johnny">
+
+            <label>Preferred Foot *</label>
+            <select id="reg-preferredFoot" required>
+                <option value="">Select...</option>
+                <option value="Right">Right</option>
+                <option value="Left">Left</option>
+                <option value="Both">Both</option>
+            </select>
+
+            <label>Years Playing Football *</label>
+            <input type="number" id="reg-yearsPlaying" min="0" max="50" placeholder="e.g. 5" required>
+
+            <label>About Me</label>
+            <textarea id="reg-aboutMe" placeholder="Tell us about your playing style..."></textarea>
+
+            <label>Positions you can play * (select at least one)</label>
+            <div id="reg-positions-container">
+                <!-- Filled by JS -->
             </div>
+
+            <label>Primary Position *</label>
+            <select id="reg-primaryPosition" required>
+                <option value="">Select positions first...</option>
+            </select>
+
+            <button onclick="register()">Create Account</button>
+            <p style="margin-top:1.5rem;">Already have an account? <a href="#" onclick="showLoginView(); return false;">Login here</a></p>
         </div>
 
-        <!-- Profile Setup (shown after first registration) -->
-        <div id="profile-setup" class="section hidden">
-            <!-- Filled by JS -->
-        </div>
-
-        <!-- Main App -->
+        <!-- MAIN APP (logged in) -->
         <div id="main-app" class="hidden">
-            <div id="profile-section"></div>
-            <div id="players-list"></div>
-            <div id="leaderboards"></div>
+            <div id="home-view">
+                <div id="welcome-section"></div>
+                
+                <div class="menu-buttons" style="display:flex; gap:1rem; margin:1.5rem 0; flex-wrap:wrap;">
+                    <button onclick="showRatePlayers()">Rate a Player</button>
+                    <button onclick="showLeaderboard()">Leaderboard</button>
+                </div>
+
+                <div id="content-area">
+                    <!-- Rate list or Leaderboard will be injected here -->
+                </div>
+            </div>
         </div>
     </div>
 
