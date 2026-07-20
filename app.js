@@ -6,12 +6,14 @@ let confirmCallback = null;
 
 // ========== ADMIN CONFIG ==========
 // Only these emails can see the Delete button
+
 const ADMIN_EMAILS = [
-    'AdminDivyansh@verify.com'
+    'admindivyansh@verify.com'   // all lowercase
 ];
 
 function isAdmin() {
-    return currentUser && ADMIN_EMAILS.includes(currentUser.email);
+    if (!currentUser || !currentUser.email) return false;
+    return ADMIN_EMAILS.includes(currentUser.email.toLowerCase());
 }
 
 // Available positions
