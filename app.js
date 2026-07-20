@@ -178,18 +178,28 @@ async function register() {
         const uid = userCredential.user.uid;
         const playerId = await generatePlayerId();
 
-        // Try to upload profile picture (optional – fails gracefully)
+        // Upload profile picture to Cloudinary (optional)
         let profilePicUrl = null;
         const fileInput = document.getElementById('reg-profilePic');
         if (fileInput && fileInput.files && fileInput.files[0]) {
             try {
                 const file = fileInput.files[0];
-                const storageRef = storage.ref(`profile-pictures/${uid}`);
-                const snapshot = await storageRef.put(file);
-                profilePicUrl = await snapshot.ref.getDownloadURL();
-            } catch (storageError) {
-                console.warn('Profile picture upload failed (Storage may not be enabled yet):', storageError);
-                showToast('Account created, but profile picture could not be uploaded. You can add it later.', 'info');
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('upload_preset', 'ggfc_profiles');
+
+                const res = await fetch('https://api.cloudinary.com/v1_1/dfcsc86hq/image/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!res.ok) throw new Error('Cloudinary upload failed');
+
+                const data = await res.json();
+                profilePicUrl = data.secure_url;
+            } catch (uploadError) {
+                console.warn('Profile picture upload failed:', uploadError);
+                showToast('Account created, but profile picture could not be uploaded.', 'info');
             }
         }
 
