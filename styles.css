@@ -148,3 +148,17 @@ input[type="range"] {
         font-size: 1.1rem;
     }
 }
+a {
+    color: #0f3460;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.menu-buttons button {
+    flex: 1;
+    min-width: 140px;
+}
