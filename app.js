@@ -5,10 +5,9 @@ let currentRatingPlayerId = null;
 let confirmCallback = null;
 
 // ========== ADMIN CONFIG ==========
-// Put the email(s) that should have admin (delete) access here
+// Only these emails can see the Delete button
 const ADMIN_EMAILS = [
-    'divyansh@example.com',   // <-- CHANGE THIS to your real email
-    // add more if needed
+    'AdminDivyansh@verify.com'
 ];
 
 function isAdmin() {
