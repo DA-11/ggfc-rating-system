@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GG FC Player Rating System</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-storage-compat.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Navigation -->
+        <nav>
+            <h1>GG FC Ratings</h1>
+            <div id="nav-buttons">
+                <!-- Dynamic buttons -->
+            </div>
+        </nav>
+
+        <!-- Auth Section -->
+        <div id="auth-section" class="section">
+            <h2>Login / Register</h2>
+            <div id="login-form">
+                <input type="email" id="email" placeholder="Email" required>
+                <input type="password" id="password" placeholder="Password" required>
+                <button onclick="login()">Login</button>
+                <button onclick="register()">Register</button>
+            </div>
+        </div>
+
+        <!-- Main App -->
+        <div id="main-app" class="hidden">
+            <div id="profile-section"></div>
+            <div id="players-list"></div>
+            <div id="leaderboards"></div>
+            <!-- More sections -->
+        </div>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
