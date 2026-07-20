@@ -2,6 +2,18 @@
 let currentUser = null;
 let players = [];
 let currentRatingPlayerId = null;
+let confirmCallback = null;
+
+// ========== ADMIN CONFIG ==========
+// Put the email(s) that should have admin (delete) access here
+const ADMIN_EMAILS = [
+    'divyansh@example.com',   // <-- CHANGE THIS to your real email
+    // add more if needed
+];
+
+function isAdmin() {
+    return currentUser && ADMIN_EMAILS.includes(currentUser.email);
+}
 
 // Available positions
 const ALL_POSITIONS = [
@@ -271,10 +283,13 @@ async function showRatePlayers() {
             hasPlayers = true;
             const div = document.createElement('div');
             div.className = 'player-card';
-
             const avatar = player.profilePicUrl
                 ? `<img src="${player.profilePicUrl}" alt="" style="width:42px;height:42px;border-radius:50%;object-fit:cover;margin-right:0.8rem;">`
                 : `<div style="width:42px;height:42px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:1.1rem;margin-right:0.8rem;">⚽</div>`;
+
+            const deleteBtn = isAdmin()
+                ? `<button class="btn-danger" style="margin-left:0.5rem;padding:0.45rem 0.9rem;font-size:0.85rem;" onclick="deletePlayer('${player.id}', '${(player.fullName || '').replace(/'/g, "\\'")}')">Delete</button>`
+                : '';
 
             div.innerHTML = `
                 <div style="display:flex;align-items:center;">
@@ -284,7 +299,10 @@ async function showRatePlayers() {
                         <small>${player.primaryPosition || 'N/A'} • ${player.preferredFoot || ''} foot</small>
                     </div>
                 </div>
-                <button onclick="ratePlayer('${player.id}')">Rate</button>
+                <div style="display:flex;align-items:center;">
+                    <button onclick="ratePlayer('${player.id}')">Rate</button>
+                    ${deleteBtn}
+                </div>
             `;
             container.appendChild(div);
         }
@@ -466,10 +484,54 @@ async function showLeaderboard() {
     content.innerHTML = html;
 }
 
+// ========== CUSTOM CONFIRM MODAL ==========
+function showConfirm(message, onConfirm) {
+    const modal = document.getElementById('confirm-modal');
+    const msgEl = document.getElementById('confirm-message');
+    const okBtn = document.getElementById('confirm-ok-btn');
+
+    msgEl.textContent = message;
+    confirmCallback = onConfirm;
+
+    okBtn.onclick = () => {
+        closeConfirmModal(true);
+    };
+
+    modal.classList.remove('hidden');
+}
+
+function closeConfirmModal(confirmed) {
+    document.getElementById('confirm-modal').classList.add('hidden');
+    if (confirmed && typeof confirmCallback === 'function') {
+        confirmCallback();
+    }
+    confirmCallback = null;
+}
+
 // ========== LOGOUT ==========
 function logout() {
-    if (confirm('Are you sure you want to logout?')) {
+    showConfirm('Are you sure you want to logout?', () => {
         auth.signOut();
         showToast('Logged out', 'info');
+    });
+}
+
+// ========== ADMIN: DELETE PLAYER (soft delete) ==========
+async function deletePlayer(playerId, playerName) {
+    if (!isAdmin()) {
+        showToast('Only admin can delete players', 'error');
+        return;
     }
+
+    showConfirm(`Delete player "${playerName}"? Their ratings will no longer count.`, async () => {
+        try {
+            await db.collection('players').doc(playerId).update({
+                isActive: false
+            });
+            showToast(`Player "${playerName}" deleted`, 'success');
+            showRatePlayers(); // refresh list
+        } catch (error) {
+            showToast(error.message, 'error');
+        }
+    });
 }
