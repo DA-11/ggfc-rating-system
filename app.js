@@ -5,10 +5,9 @@ let currentRatingPlayerId = null;
 let confirmCallback = null;
 
 // ========== ADMIN CONFIG ==========
-// Only these emails can see the Delete button
-
+// Only these emails can see the Delete button (case-insensitive)
 const ADMIN_EMAILS = [
-    'admindivyansh@verify.com'   // all lowercase
+    'admindivyansh@verify.com'
 ];
 
 function isAdmin() {
@@ -24,24 +23,18 @@ const ALL_POSITIONS = [
     { group: "Attack", positions: ["LW", "RW", "CF", "ST", "SS"] }
 ];
 
-// ========== TOAST / POPOVER SYSTEM ==========
+// ========== TOAST ==========
 function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
     if (!container) return;
 
-    const icons = {
-        success: '✓',
-        error: '✕',
-        info: 'ℹ'
-    };
-
+    const icons = { success: '✓', error: '✕', info: 'ℹ' };
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     toast.innerHTML = `
         <span class="toast-icon">${icons[type] || icons.info}</span>
         <span class="toast-message">${message}</span>
     `;
-
     container.appendChild(toast);
 
     setTimeout(() => {
@@ -120,7 +113,6 @@ function previewProfilePic(event) {
         showToast('Please select an image file', 'error');
         return;
     }
-
     if (file.size > 5 * 1024 * 1024) {
         showToast('Image must be smaller than 5MB', 'error');
         return;
@@ -191,7 +183,6 @@ async function register() {
         const uid = userCredential.user.uid;
         const playerId = await generatePlayerId();
 
-        // Upload profile picture to Cloudinary (optional)
         let profilePicUrl = null;
         const fileInput = document.getElementById('reg-profilePic');
         if (fileInput && fileInput.files && fileInput.files[0]) {
@@ -205,9 +196,7 @@ async function register() {
                     method: 'POST',
                     body: formData
                 });
-
                 if (!res.ok) throw new Error('Cloudinary upload failed');
-
                 const data = await res.json();
                 profilePicUrl = data.secure_url;
             } catch (uploadError) {
@@ -217,16 +206,16 @@ async function register() {
         }
 
         const playerData = {
-            playerId: playerId,
-            fullName: fullName,
+            playerId,
+            fullName,
             nickname: nickname || null,
-            preferredFoot: preferredFoot,
-            yearsPlaying: yearsPlaying,
+            preferredFoot,
+            yearsPlaying,
             aboutMe: aboutMe || null,
             positions: selectedPositions,
-            primaryPosition: primaryPosition,
-            email: email,
-            profilePicUrl: profilePicUrl,
+            primaryPosition,
+            email,
+            profilePicUrl,
             isActive: true,
             profileComplete: true,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -239,7 +228,6 @@ async function register() {
     }
 }
 
-// ========== GENERATE PLAYER ID ==========
 async function generatePlayerId() {
     const snapshot = await db.collection('players').get();
     const count = snapshot.size + 1;
@@ -284,6 +272,7 @@ async function showRatePlayers() {
             hasPlayers = true;
             const div = document.createElement('div');
             div.className = 'player-card';
+
             const avatar = player.profilePicUrl
                 ? `<img src="${player.profilePicUrl}" alt="" style="width:42px;height:42px;border-radius:50%;object-fit:cover;margin-right:0.8rem;">`
                 : `<div style="width:42px;height:42px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:1.1rem;margin-right:0.8rem;">⚽</div>`;
@@ -314,17 +303,27 @@ async function showRatePlayers() {
     }
 }
 
-// ========== RATING FORM ==========
+// ========== RATING FORM (with profile pic) ==========
 async function ratePlayer(playerId) {
     currentRatingPlayerId = playerId;
     const player = players.find(p => p.id === playerId);
     if (!player) return;
 
     const content = document.getElementById('content-area');
-    
+
+    const avatar = player.profilePicUrl
+        ? `<img src="${player.profilePicUrl}" alt="" style="width:64px;height:64px;border-radius:50%;object-fit:cover;">`
+        : `<div style="width:64px;height:64px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:1.6rem;">⚽</div>`;
+
     let html = `
         <div>
-            <h2 style="margin-bottom:1rem;">Rate ${player.fullName}${player.nickname ? ' (' + player.nickname + ')' : ''}</h2>
+            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem;">
+                ${avatar}
+                <div>
+                    <h2 style="margin:0;">Rate ${player.fullName}${player.nickname ? ' (' + player.nickname + ')' : ''}</h2>
+                    <p style="color:var(--text-muted);margin:0.2rem 0 0;">${player.primaryPosition || ''} • ${player.preferredFoot || ''} foot</p>
+                </div>
+            </div>
             <div class="form-group">
                 <label>Position you are rating for</label>
                 <select id="rating-position" onchange="loadRatingForm()">
@@ -351,14 +350,14 @@ async function ratePlayer(playerId) {
 function loadRatingForm() {
     const position = document.getElementById('rating-position').value;
     const formContainer = document.getElementById('rating-form');
-    
+
     const isGK = position === 'GK';
-    const params = isGK ? 
+    const params = isGK ?
         ['Shot Stopping', 'Handling', 'Reflexes', 'Positioning', 'Communication', 'Distribution', 'Aerial Ability', 'One-on-One Ability', 'Decision Making', 'Consistency'] :
         ['Ball Control', 'Pace', 'Passing', 'Dribbling', 'Shooting', 'Defending', 'Physicality', 'Stamina', 'Game IQ', 'Teamwork'];
 
     let formHTML = `<h3 style="margin:1.2rem 0 0.5rem; font-size:1.1rem;">Rating for ${position}</h3>`;
-    
+
     params.forEach(param => {
         const id = param.toLowerCase().replace(/\s+/g, '');
         formHTML += `
@@ -383,7 +382,7 @@ function updateSliderValue(id) {
 async function submitRating() {
     const position = document.getElementById('rating-position').value;
     const isGK = position === 'GK';
-    const paramIds = isGK ? 
+    const paramIds = isGK ?
         ['shotstopping','handling','reflexes','positioning','communication','distribution','aerialability','oneononeability','decisionmaking','consistency'] :
         ['ballcontrol','pace','passing','dribbling','shooting','defending','physicality','stamina','gameiq','teamwork'];
 
@@ -417,7 +416,7 @@ async function submitRating() {
     }
 }
 
-// ========== LEADERBOARD ==========
+// ========== LEADERBOARD (with pics + clickable) ==========
 async function showLeaderboard() {
     const content = document.getElementById('content-area');
     content.innerHTML = '<h3 style="margin-bottom:1rem;">Overall Leaderboard</h3><p style="color:var(--text-muted);">Loading rankings...</p>';
@@ -433,9 +432,15 @@ async function showLeaderboard() {
 
     allPlayers.forEach(p => {
         playerAverages[p.id] = {
+            id: p.id,
             fullName: p.fullName,
             nickname: p.nickname,
             primaryPosition: p.primaryPosition,
+            preferredFoot: p.preferredFoot,
+            profilePicUrl: p.profilePicUrl,
+            aboutMe: p.aboutMe,
+            yearsPlaying: p.yearsPlaying,
+            positions: p.positions,
             ratings: [],
             average: 0,
             count: 0
@@ -461,16 +466,24 @@ async function showLeaderboard() {
         .filter(p => p.count > 0)
         .sort((a, b) => b.average - a.average);
 
+    // Store for detail view
+    window._leaderboardData = playerAverages;
+
     let html = '<h3 style="margin-bottom:1rem;">Overall Leaderboard</h3>';
-    
+
     if (ranked.length === 0) {
         html += '<p style="color:var(--text-muted);">No ratings submitted yet.</p>';
     } else {
         ranked.forEach((p, index) => {
+            const avatar = p.profilePicUrl
+                ? `<img src="${p.profilePicUrl}" alt="" style="width:42px;height:42px;border-radius:50%;object-fit:cover;">`
+                : `<div style="width:42px;height:42px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:1.1rem;">⚽</div>`;
+
             html += `
-                <div class="player-card">
+                <div class="player-card" style="cursor:pointer;" onclick="showPlayerDetail('${p.id}')">
                     <div style="display:flex; align-items:center; gap:0.8rem;">
                         <span class="rank-badge">#${index + 1}</span>
+                        ${avatar}
                         <div>
                             <h3>${p.fullName}${p.nickname ? ' (' + p.nickname + ')' : ''}</h3>
                             <small>${p.primaryPosition || ''} • ${p.count} rating${p.count > 1 ? 's' : ''}</small>
@@ -485,6 +498,113 @@ async function showLeaderboard() {
     content.innerHTML = html;
 }
 
+// ========== PLAYER DETAIL PAGE ==========
+async function showPlayerDetail(playerId) {
+    const content = document.getElementById('content-area');
+    content.innerHTML = '<p style="color:var(--text-muted);">Loading player details...</p>';
+
+    // Get player data
+    let player = window._leaderboardData ? window._leaderboardData[playerId] : null;
+
+    if (!player) {
+        const doc = await db.collection('players').doc(playerId).get();
+        if (!doc.exists) {
+            content.innerHTML = '<p>Player not found.</p><button class="secondary" onclick="showLeaderboard()">Back</button>';
+            return;
+        }
+        player = { id: doc.id, ...doc.data() };
+    }
+
+    // Get all ratings for this player
+    const ratingsSnap = await db.collection('ratings')
+        .where('ratedPlayerId', '==', playerId)
+        .get();
+
+    const ratings = ratingsSnap.docs.map(d => d.data());
+
+    // Calculate averages per parameter
+    const isGK = player.primaryPosition === 'GK';
+    const paramKeys = isGK ?
+        ['shotstopping','handling','reflexes','positioning','communication','distribution','aerialability','oneononeability','decisionmaking','consistency'] :
+        ['ballcontrol','pace','passing','dribbling','shooting','defending','physicality','stamina','gameiq','teamwork'];
+
+    const paramLabels = isGK ?
+        ['Shot Stopping','Handling','Reflexes','Positioning','Communication','Distribution','Aerial Ability','One-on-One','Decision Making','Consistency'] :
+        ['Ball Control','Pace','Passing','Dribbling','Shooting','Defending','Physicality','Stamina','Game IQ','Teamwork'];
+
+    const averages = {};
+    paramKeys.forEach((key, i) => {
+        const values = ratings.map(r => r[key]).filter(v => typeof v === 'number');
+        averages[paramLabels[i]] = values.length > 0
+            ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1)
+            : '—';
+    });
+
+    const overallAvg = player.average || (ratings.length > 0
+        ? (ratings.reduce((a, r) => a + (r.overall || 0), 0) / ratings.length).toFixed(1)
+        : '—');
+
+    const avatar = player.profilePicUrl
+        ? `<img src="${player.profilePicUrl}" alt="" style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid var(--border);">`
+        : `<div style="width:90px;height:90px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:2.2rem;">⚽</div>`;
+
+    let paramsHtml = '';
+    Object.entries(averages).forEach(([label, val]) => {
+        paramsHtml += `
+            <div style="display:flex;justify-content:space-between;padding:0.45rem 0;border-bottom:1px solid var(--border);">
+                <span style="color:var(--text-muted);">${label}</span>
+                <strong style="color:var(--primary);">${val}</strong>
+            </div>
+        `;
+    });
+
+    content.innerHTML = `
+        <div>
+            <button class="secondary" style="margin-bottom:1.2rem;" onclick="showLeaderboard()">← Back to Leaderboard</button>
+
+            <div style="display:flex;align-items:center;gap:1.2rem;margin-bottom:1.5rem;">
+                ${avatar}
+                <div>
+                    <h2 style="margin:0 0 0.3rem;">${player.fullName}${player.nickname ? ' (' + player.nickname + ')' : ''}</h2>
+                    <p style="color:var(--text-muted);margin:0;">
+                        ${player.primaryPosition || 'N/A'} • ${player.preferredFoot || 'N/A'} foot
+                        ${player.yearsPlaying != null ? ' • ' + player.yearsPlaying + ' yrs' : ''}
+                    </p>
+                    <p style="margin:0.4rem 0 0;font-size:1.4rem;font-weight:700;color:var(--primary);">
+                        Overall: ${overallAvg}
+                        <span style="font-size:0.85rem;color:var(--text-muted);font-weight:400;">
+                            (${ratings.length} rating${ratings.length !== 1 ? 's' : ''})
+                        </span>
+                    </p>
+                </div>
+            </div>
+
+            ${player.aboutMe ? `
+                <div style="margin-bottom:1.4rem;padding:1rem;background:var(--surface-2);border-radius:10px;">
+                    <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.3rem;text-transform:uppercase;letter-spacing:0.04em;">About</div>
+                    <p style="margin:0;line-height:1.5;">${player.aboutMe}</p>
+                </div>
+            ` : ''}
+
+            <div style="margin-bottom:1rem;">
+                <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem;text-transform:uppercase;letter-spacing:0.04em;">Positions</div>
+                <div style="display:flex;flex-wrap:wrap;gap:0.4rem;">
+                    ${(player.positions || []).map(p => `
+                        <span style="background:var(--surface-2);border:1px solid var(--border);padding:0.3rem 0.7rem;border-radius:6px;font-size:0.85rem;">
+                            ${p}${p === player.primaryPosition ? ' ★' : ''}
+                        </span>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div style="margin-top:1.5rem;">
+                <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.6rem;text-transform:uppercase;letter-spacing:0.04em;">Average Ratings</div>
+                ${paramsHtml || '<p style="color:var(--text-muted);">No ratings yet.</p>'}
+            </div>
+        </div>
+    `;
+}
+
 // ========== CUSTOM CONFIRM MODAL ==========
 function showConfirm(message, onConfirm) {
     const modal = document.getElementById('confirm-modal');
@@ -493,11 +613,7 @@ function showConfirm(message, onConfirm) {
 
     msgEl.textContent = message;
     confirmCallback = onConfirm;
-
-    okBtn.onclick = () => {
-        closeConfirmModal(true);
-    };
-
+    okBtn.onclick = () => closeConfirmModal(true);
     modal.classList.remove('hidden');
 }
 
@@ -517,7 +633,7 @@ function logout() {
     });
 }
 
-// ========== ADMIN: DELETE PLAYER (soft delete) ==========
+// ========== ADMIN: DELETE PLAYER ==========
 async function deletePlayer(playerId, playerName) {
     if (!isAdmin()) {
         showToast('Only admin can delete players', 'error');
@@ -526,11 +642,9 @@ async function deletePlayer(playerId, playerName) {
 
     showConfirm(`Delete player "${playerName}"? Their ratings will no longer count.`, async () => {
         try {
-            await db.collection('players').doc(playerId).update({
-                isActive: false
-            });
+            await db.collection('players').doc(playerId).update({ isActive: false });
             showToast(`Player "${playerName}" deleted`, 'success');
-            showRatePlayers(); // refresh list
+            showRatePlayers();
         } catch (error) {
             showToast(error.message, 'error');
         }
