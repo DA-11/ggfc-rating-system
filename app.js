@@ -303,7 +303,75 @@ async function showRatePlayers() {
     }
 }
 
-// ========== RATING FORM (with profile pic) ==========
+// // ========== RATING FORM (with profile pic) ==========
+// async function ratePlayer(playerId) {
+//     currentRatingPlayerId = playerId;
+//     const player = players.find(p => p.id === playerId);
+//     if (!player) return;
+
+//     const content = document.getElementById('content-area');
+
+//     const avatar = player.profilePicUrl
+//         ? `<img src="${player.profilePicUrl}" alt="" style="width:64px;height:64px;border-radius:50%;object-fit:cover;">`
+//         : `<div style="width:64px;height:64px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:1.6rem;">⚽</div>`;
+
+//     let html = `
+//         <div>
+//             <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem;">
+//                 ${avatar}
+//                 <div>
+//                     <h2 style="margin:0;">Rate ${player.fullName}${player.nickname ? ' (' + player.nickname + ')' : ''}</h2>
+//                     <p style="color:var(--text-muted);margin:0.2rem 0 0;">${player.primaryPosition || ''} • ${player.preferredFoot || ''} foot</p>
+//                 </div>
+//             </div>
+//             <div class="form-group">
+//                 <label>Position you are rating for</label>
+//                 <select id="rating-position" onchange="loadRatingForm()">
+//     `;
+
+//     const positions = player.positions || ["CM"];
+//     positions.forEach(pos => {
+//         html += `<option value="${pos}">${pos}</option>`;
+//     });
+//     html += `</select></div>`;
+
+//     html += `<div id="rating-form"></div>`;
+//     html += `
+//         <div style="margin-top:1.5rem; display:flex; gap:0.8rem;">
+//             <button class="btn-primary" onclick="submitRating()">Submit Rating</button>
+//             <button class="secondary" onclick="showRatePlayers()">Cancel</button>
+//         </div>
+//     `;
+
+//     content.innerHTML = html;
+//     loadRatingForm();
+// }
+
+// function loadRatingForm() {
+//     const position = document.getElementById('rating-position').value;
+//     const formContainer = document.getElementById('rating-form');
+
+//     const isGK = position === 'GK';
+//     const params = isGK ?
+//         ['Shot Stopping', 'Handling', 'Reflexes', 'Positioning', 'Communication', 'Distribution', 'Aerial Ability', 'One-on-One Ability', 'Decision Making', 'Consistency'] :
+//         ['Ball Control', 'Pace', 'Passing', 'Dribbling', 'Shooting', 'Defending', 'Physicality', 'Stamina', 'Game IQ', 'Teamwork'];
+
+//     let formHTML = `<h3 style="margin:1.2rem 0 0.5rem; font-size:1.1rem;">Rating for ${position}</h3>`;
+
+//     params.forEach(param => {
+//         const id = param.toLowerCase().replace(/\s+/g, '');
+//         formHTML += `
+//             <div>
+//                 <label>${param}</label>
+//                 <input type="range" id="${id}" min="1" max="10" value="5" oninput="updateSliderValue('${id}')">
+//                 <span id="${id}-value">5</span>
+//             </div>
+//         `;
+//     });
+
+//     formContainer.innerHTML = formHTML;
+// }
+// ========== RATING FORM (FIFA Style - No Position Dropdown) ==========
 async function ratePlayer(playerId) {
     currentRatingPlayerId = playerId;
     const player = players.find(p => p.id === playerId);
@@ -315,62 +383,87 @@ async function ratePlayer(playerId) {
         ? `<img src="${player.profilePicUrl}" alt="" style="width:64px;height:64px;border-radius:50%;object-fit:cover;">`
         : `<div style="width:64px;height:64px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:1.6rem;">⚽</div>`;
 
+    // Automatically use Primary Position
+    const position = player.primaryPosition || "CM";
+    const isGK = position === 'GK';
+
     let html = `
         <div>
-            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem;">
+            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;">
                 ${avatar}
                 <div>
                     <h2 style="margin:0;">Rate ${player.fullName}${player.nickname ? ' (' + player.nickname + ')' : ''}</h2>
-                    <p style="color:var(--text-muted);margin:0.2rem 0 0;">${player.primaryPosition || ''} • ${player.preferredFoot || ''} foot</p>
+                    <p style="color:var(--text-muted);margin:0.2rem 0 0;">Rating as <strong>${position}</strong></p>
                 </div>
             </div>
-            <div class="form-group">
-                <label>Position you are rating for</label>
-                <select id="rating-position" onchange="loadRatingForm()">
-    `;
-
-    const positions = player.positions || ["CM"];
-    positions.forEach(pos => {
-        html += `<option value="${pos}">${pos}</option>`;
-    });
-    html += `</select></div>`;
-
-    html += `<div id="rating-form"></div>`;
-    html += `
-        <div style="margin-top:1.5rem; display:flex; gap:0.8rem;">
-            <button class="btn-primary" onclick="submitRating()">Submit Rating</button>
-            <button class="secondary" onclick="showRatePlayers()">Cancel</button>
+            <div id="rating-form"></div>
+            <div style="margin-top:1.8rem; display:flex; gap:0.8rem;">
+                <button class="btn-primary" onclick="submitRating('${position}')">Submit Rating</button>
+                <button class="secondary" onclick="showRatePlayers()">Cancel</button>
+            </div>
         </div>
     `;
 
     content.innerHTML = html;
-    loadRatingForm();
+    loadRatingForm(isGK);
 }
 
-function loadRatingForm() {
-    const position = document.getElementById('rating-position').value;
+function loadRatingForm(isGK) {
     const formContainer = document.getElementById('rating-form');
 
-    const isGK = position === 'GK';
-    const params = isGK ?
-        ['Shot Stopping', 'Handling', 'Reflexes', 'Positioning', 'Communication', 'Distribution', 'Aerial Ability', 'One-on-One Ability', 'Decision Making', 'Consistency'] :
-        ['Ball Control', 'Pace', 'Passing', 'Dribbling', 'Shooting', 'Defending', 'Physicality', 'Stamina', 'Game IQ', 'Teamwork'];
+    const params = isGK ? 
+        [
+            { name: 'Shot Stopping', code: 'STO' },
+            { name: 'Handling', code: 'HAN' },
+            { name: 'Reflexes', code: 'REF' },
+            { name: 'Positioning', code: 'POS' },
+            { name: 'Communication', code: 'COM' },
+            { name: 'Distribution', code: 'DIS' },
+            { name: 'Aerial Ability', code: 'AER' },
+            { name: 'One-on-One', code: '1v1' },
+            { name: 'Decision Making', code: 'DEC' },
+            { name: 'Consistency', code: 'CON' }
+        ] :
+        [
+            { name: 'Pace', code: 'PAC' },
+            { name: 'Shooting', code: 'SHO' },
+            { name: 'Passing', code: 'PAS' },
+            { name: 'Dribbling', code: 'DRI' },
+            { name: 'Defending', code: 'DEF' },
+            { name: 'Physical', code: 'PHY' },
+            { name: 'Stamina', code: 'STA' },
+            { name: 'Game IQ', code: 'IQ' },
+            { name: 'Teamwork', code: 'TMW' },
+            { name: 'Ball Control', code: 'CTR' }
+        ];
 
-    let formHTML = `<h3 style="margin:1.2rem 0 0.5rem; font-size:1.1rem;">Rating for ${position}</h3>`;
+    let formHTML = '';
 
-    params.forEach(param => {
-        const id = param.toLowerCase().replace(/\s+/g, '');
+    params.forEach((param, index) => {
+        const id = param.name.toLowerCase().replace(/\s+/g, '').replace(/-/g, '');
         formHTML += `
-            <div>
-                <label>${param}</label>
-                <input type="range" id="${id}" min="1" max="10" value="5" oninput="updateSliderValue('${id}')">
-                <span id="${id}-value">5</span>
+            <div class="fifa-attr">
+                <div class="fifa-attr-name">${param.name} (${param.code})</div>
+                <div class="fifa-attr-value" id="${id}-value">5</div>
+                <div class="fifa-bar-container">
+                    <div class="fifa-bar-fill" id="${id}-bar" style="width: 50%;"></div>
+                </div>
             </div>
+            <input type="range" class="fifa-slider" id="${id}" min="1" max="10" value="5" 
+                   oninput="updateFifaBar('${id}')">
         `;
     });
 
     formContainer.innerHTML = formHTML;
 }
+
+function updateFifaBar(id) {
+    const slider = document.getElementById(id);
+    const value = slider.value;
+    document.getElementById(id + '-value').textContent = value;
+    document.getElementById(id + '-bar').style.width = (value * 10) + '%';
+}
+
 
 function updateSliderValue(id) {
     const slider = document.getElementById(id);
