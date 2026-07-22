@@ -472,15 +472,52 @@ function updateSliderValue(id) {
     }
 }
 
-async function submitRating() {
-    const position = document.getElementById('rating-position').value;
+// async function submitRating() {
+//     const position = document.getElementById('rating-position').value;
+//     const isGK = position === 'GK';
+//     const paramIds = isGK ?
+//         ['shotstopping','handling','reflexes','positioning','communication','distribution','aerialability','oneononeability','decisionmaking','consistency'] :
+//         ['ballcontrol','pace','passing','dribbling','shooting','defending','physicality','stamina','gameiq','teamwork'];
+
+//     let sum = 0;
+//     let count = 0;
+//     const ratingData = {
+//         ratedPlayerId: currentRatingPlayerId,
+//         ratedByPlayerId: currentUser.uid,
+//         positionRated: position,
+//         timestamp: firebase.firestore.FieldValue.serverTimestamp()
+//     };
+
+//     paramIds.forEach(id => {
+//         const slider = document.getElementById(id);
+//         if (slider) {
+//             const val = parseInt(slider.value);
+//             ratingData[id] = val;
+//             sum += val;
+//             count++;
+//         }
+//     });
+
+//     ratingData.overall = count > 0 ? parseFloat((sum / count).toFixed(1)) : 0;
+
+//     try {
+//         await db.collection('ratings').add(ratingData);
+//         showToast('Rating submitted successfully!', 'success');
+//         showRatePlayers();
+//     } catch (error) {
+//         showToast(error.message, 'error');
+//     }
+// }
+
+async function submitRating(position) {
     const isGK = position === 'GK';
-    const paramIds = isGK ?
-        ['shotstopping','handling','reflexes','positioning','communication','distribution','aerialability','oneononeability','decisionmaking','consistency'] :
-        ['ballcontrol','pace','passing','dribbling','shooting','defending','physicality','stamina','gameiq','teamwork'];
+    const paramIds = isGK ? 
+        ['shotstopping','handling','reflexes','positioning','communication','distribution','aerialability','oneonone','decisionmaking','consistency'] :
+        ['pace','shooting','passing','dribbling','defending','physical','stamina','gameiq','teamwork','ballcontrol'];
 
     let sum = 0;
     let count = 0;
+0;
     const ratingData = {
         ratedPlayerId: currentRatingPlayerId,
         ratedByPlayerId: currentUser.uid,
