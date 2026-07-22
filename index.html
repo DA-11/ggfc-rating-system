@@ -100,21 +100,31 @@
             <p class="switch-auth">Already have an account? <a href="#" onclick="showLoginView(); return false;">Login here</a></p>
         </div>
 
+        
         <!-- MAIN APP (logged in) -->
         <div id="main-app" class="hidden">
             <div id="home-view">
                 <div id="welcome-section" class="welcome-card"></div>
+                    <div class="menu-buttons">
+                        <button class="btn-menu" onclick="showRatePlayers()">
+                            <span class="btn-icon">⭐</span>
+                            Rate a Player
+                        </button>
+                        <button class="btn-menu" onclick="showLeaderboard()">
+                            <span class="btn-icon">🏆</span>
+                            Leaderboard
+                        </button>
+                    </div>
+                    
+                    <!-- YouTube Section -->
+                    <div class="youtube-section">
+                        <button class="youtube-btn" onclick="window.open('https://www.youtube.com/@GGFCBhopal', '_blank')">
+                            ▶ Watch GG FC Videos
+                        </button>
+                    </div>
+
                 
-                <div class="menu-buttons">
-                    <button class="btn-menu" onclick="showRatePlayers()">
-                        <span class="btn-icon">⭐</span>
-                        Rate a Player
-                    </button>
-                    <button class="btn-menu" onclick="showLeaderboard()">
-                        <span class="btn-icon">🏆</span>
-                        Leaderboard
-                    </button>
-                </div>
+              
 
                 <div id="content-area" class="content-card">
                     <!-- Rate list or Leaderboard injected here -->
