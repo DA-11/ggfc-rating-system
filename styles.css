@@ -558,12 +558,11 @@ input[type="range"]::-webkit-slider-thumb {
     input[type="range"] { width: 65%; }
 }
 
-
 /* ========== FIFA STYLE RATING BARS ========== */
 .fifa-attr {
     display: flex;
     align-items: center;
-    margin: 12px 0;
+    margin-bottom: 6px;
     gap: 12px;
 }
 
@@ -571,10 +570,11 @@ input[type="range"]::-webkit-slider-thumb {
     width: 140px;
     font-size: 0.95rem;
     font-weight: 500;
+    color: #e8eaed;
 }
 
 .fifa-attr-value {
-    width: 32px;
+    width: 28px;
     font-size: 1.15rem;
     font-weight: 700;
     color: #4f8cff;
@@ -583,48 +583,47 @@ input[type="range"]::-webkit-slider-thumb {
 
 .fifa-bar-container {
     flex: 1;
-    height: 10px;
-    background: #2e3345;
-    border-radius: 5px;
+    height: 12px;
+    background: #2a2e3d;
+    border-radius: 6px;
     overflow: hidden;
+    position: relative;
 }
 
 .fifa-bar-fill {
     height: 100%;
-    background: #4f8cff;
-    border-radius: 5px;
-    transition: width 0.2s ease;
+    background: linear-gradient(90deg, #3a7bd5, #4f8cff);
+    border-radius: 6px;
+    transition: width 0.15s ease;
 }
 
+/* Make the slider thinner and cleaner */
 .fifa-slider {
     width: 100%;
-    margin-top: 4px;
+    height: 6px;
+    margin: 2px 0 16px 0;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #2a2e3d;
+    border-radius: 4px;
+    outline: none;
 }
 
-/* YouTube Section */
-.youtube-section {
-    max-width: 640px;
-    margin: 0 auto 1.5rem;
-    padding: 0 0.5rem;
-}
-
-.youtube-btn {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.7rem;
-    padding: 1.1rem;
-    background: #ff0000;
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-size: 1.05rem;
-    font-weight: 600;
+.fifa-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    background: #4f8cff;
+    border-radius: 50%;
     cursor: pointer;
-    transition: background 0.2s;
+    border: 2px solid #fff;
 }
 
-.youtube-btn:hover {
-    background: #cc0000;
+.fifa-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: #4f8cff;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #fff;
 }
