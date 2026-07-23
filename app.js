@@ -303,74 +303,6 @@ async function showRatePlayers() {
     }
 }
 
-// // ========== RATING FORM (with profile pic) ==========
-// async function ratePlayer(playerId) {
-//     currentRatingPlayerId = playerId;
-//     const player = players.find(p => p.id === playerId);
-//     if (!player) return;
-
-//     const content = document.getElementById('content-area');
-
-//     const avatar = player.profilePicUrl
-//         ? `<img src="${player.profilePicUrl}" alt="" style="width:64px;height:64px;border-radius:50%;object-fit:cover;">`
-//         : `<div style="width:64px;height:64px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:1.6rem;">⚽</div>`;
-
-//     let html = `
-//         <div>
-//             <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem;">
-//                 ${avatar}
-//                 <div>
-//                     <h2 style="margin:0;">Rate ${player.fullName}${player.nickname ? ' (' + player.nickname + ')' : ''}</h2>
-//                     <p style="color:var(--text-muted);margin:0.2rem 0 0;">${player.primaryPosition || ''} • ${player.preferredFoot || ''} foot</p>
-//                 </div>
-//             </div>
-//             <div class="form-group">
-//                 <label>Position you are rating for</label>
-//                 <select id="rating-position" onchange="loadRatingForm()">
-//     `;
-
-//     const positions = player.positions || ["CM"];
-//     positions.forEach(pos => {
-//         html += `<option value="${pos}">${pos}</option>`;
-//     });
-//     html += `</select></div>`;
-
-//     html += `<div id="rating-form"></div>`;
-//     html += `
-//         <div style="margin-top:1.5rem; display:flex; gap:0.8rem;">
-//             <button class="btn-primary" onclick="submitRating()">Submit Rating</button>
-//             <button class="secondary" onclick="showRatePlayers()">Cancel</button>
-//         </div>
-//     `;
-
-//     content.innerHTML = html;
-//     loadRatingForm();
-// }
-
-// function loadRatingForm() {
-//     const position = document.getElementById('rating-position').value;
-//     const formContainer = document.getElementById('rating-form');
-
-//     const isGK = position === 'GK';
-//     const params = isGK ?
-//         ['Shot Stopping', 'Handling', 'Reflexes', 'Positioning', 'Communication', 'Distribution', 'Aerial Ability', 'One-on-One Ability', 'Decision Making', 'Consistency'] :
-//         ['Ball Control', 'Pace', 'Passing', 'Dribbling', 'Shooting', 'Defending', 'Physicality', 'Stamina', 'Game IQ', 'Teamwork'];
-
-//     let formHTML = `<h3 style="margin:1.2rem 0 0.5rem; font-size:1.1rem;">Rating for ${position}</h3>`;
-
-//     params.forEach(param => {
-//         const id = param.toLowerCase().replace(/\s+/g, '');
-//         formHTML += `
-//             <div>
-//                 <label>${param}</label>
-//                 <input type="range" id="${id}" min="1" max="10" value="5" oninput="updateSliderValue('${id}')">
-//                 <span id="${id}-value">5</span>
-//             </div>
-//         `;
-//     });
-
-//     formContainer.innerHTML = formHTML;
-// }
 // ========== RATING FORM (FIFA Style - No Position Dropdown) ==========
 async function ratePlayer(playerId) {
     currentRatingPlayerId = playerId;
@@ -397,7 +329,7 @@ async function ratePlayer(playerId) {
                 </div>
             </div>
             <div id="rating-form"></div>
-            <div style="margin-top:1.8rem; display:flex; gap:0.8rem;">
+            <div style="margin-top:1.5rem; display:flex; gap:0.8rem;">
                 <button class="btn-primary" onclick="submitRating('${position}')">Submit Rating</button>
                 <button class="secondary" onclick="showRatePlayers()">Cancel</button>
             </div>
@@ -413,44 +345,43 @@ function loadRatingForm(isGK) {
 
     const params = isGK ? 
         [
-            { name: 'Shot Stopping', code: 'STO' },
-            { name: 'Handling', code: 'HAN' },
-            { name: 'Reflexes', code: 'REF' },
-            { name: 'Positioning', code: 'POS' },
-            { name: 'Communication', code: 'COM' },
-            { name: 'Distribution', code: 'DIS' },
-            { name: 'Aerial Ability', code: 'AER' },
-            { name: 'One-on-One', code: '1v1' },
-            { name: 'Decision Making', code: 'DEC' },
-            { name: 'Consistency', code: 'CON' }
+            { name: 'Shot Stopping', code: 'STO', id: 'shotstopping' },
+            { name: 'Handling', code: 'HAN', id: 'handling' },
+            { name: 'Reflexes', code: 'REF', id: 'reflexes' },
+            { name: 'Positioning', code: 'POS', id: 'positioning' },
+            { name: 'Communication', code: 'COM', id: 'communication' },
+            { name: 'Distribution', code: 'DIS', id: 'distribution' },
+            { name: 'Aerial Ability', code: 'AER', id: 'aerialability' },
+            { name: 'One-on-One', code: '1v1', id: 'oneononeability' },
+            { name: 'Decision Making', code: 'DEC', id: 'decisionmaking' },
+            { name: 'Consistency', code: 'CON', id: 'consistency' }
         ] :
         [
-            { name: 'Pace', code: 'PAC' },
-            { name: 'Shooting', code: 'SHO' },
-            { name: 'Passing', code: 'PAS' },
-            { name: 'Dribbling', code: 'DRI' },
-            { name: 'Defending', code: 'DEF' },
-            { name: 'Physical', code: 'PHY' },
-            { name: 'Stamina', code: 'STA' },
-            { name: 'Game IQ', code: 'IQ' },
-            { name: 'Teamwork', code: 'TMW' },
-            { name: 'Ball Control', code: 'CTR' }
+            { name: 'Pace', code: 'PAC', id: 'pace' },
+            { name: 'Shooting', code: 'SHO', id: 'shooting' },
+            { name: 'Passing', code: 'PAS', id: 'passing' },
+            { name: 'Dribbling', code: 'DRI', id: 'dribbling' },
+            { name: 'Defending', code: 'DEF', id: 'defending' },
+            { name: 'Physical', code: 'PHY', id: 'physicality' },
+            { name: 'Stamina', code: 'STA', id: 'stamina' },
+            { name: 'Game IQ', code: 'IQ', id: 'gameiq' },
+            { name: 'Teamwork', code: 'TMW', id: 'teamwork' },
+            { name: 'Ball Control', code: 'CTR', id: 'ballcontrol' }
         ];
 
     let formHTML = '';
 
-    params.forEach((param, index) => {
-        const id = param.name.toLowerCase().replace(/\s+/g, '').replace(/-/g, '');
+    params.forEach(param => {
         formHTML += `
             <div class="fifa-attr">
                 <div class="fifa-attr-name">${param.name} (${param.code})</div>
-                <div class="fifa-attr-value" id="${id}-value">5</div>
+                <div class="fifa-attr-value" id="${param.id}-value">5</div>
                 <div class="fifa-bar-container">
-                    <div class="fifa-bar-fill" id="${id}-bar" style="width: 50%;"></div>
+                    <div class="fifa-bar-fill" id="${param.id}-bar" style="width: 50%;"></div>
                 </div>
             </div>
-            <input type="range" class="fifa-slider" id="${id}" min="1" max="10" value="5" 
-                   oninput="updateFifaBar('${id}')">
+            <input type="range" class="fifa-slider" id="${param.id}" min="1" max="10" value="5" 
+                   oninput="updateFifaBar('${param.id}')">
         `;
     });
 
@@ -459,65 +390,20 @@ function loadRatingForm(isGK) {
 
 function updateFifaBar(id) {
     const slider = document.getElementById(id);
+    if (!slider) return;
     const value = slider.value;
     document.getElementById(id + '-value').textContent = value;
     document.getElementById(id + '-bar').style.width = (value * 10) + '%';
 }
 
-
-function updateSliderValue(id) {
-    const slider = document.getElementById(id);
-    if (slider) {
-        document.getElementById(id + '-value').textContent = slider.value;
-    }
-}
-
-// async function submitRating() {
-//     const position = document.getElementById('rating-position').value;
-//     const isGK = position === 'GK';
-//     const paramIds = isGK ?
-//         ['shotstopping','handling','reflexes','positioning','communication','distribution','aerialability','oneononeability','decisionmaking','consistency'] :
-//         ['ballcontrol','pace','passing','dribbling','shooting','defending','physicality','stamina','gameiq','teamwork'];
-
-//     let sum = 0;
-//     let count = 0;
-//     const ratingData = {
-//         ratedPlayerId: currentRatingPlayerId,
-//         ratedByPlayerId: currentUser.uid,
-//         positionRated: position,
-//         timestamp: firebase.firestore.FieldValue.serverTimestamp()
-//     };
-
-//     paramIds.forEach(id => {
-//         const slider = document.getElementById(id);
-//         if (slider) {
-//             const val = parseInt(slider.value);
-//             ratingData[id] = val;
-//             sum += val;
-//             count++;
-//         }
-//     });
-
-//     ratingData.overall = count > 0 ? parseFloat((sum / count).toFixed(1)) : 0;
-
-//     try {
-//         await db.collection('ratings').add(ratingData);
-//         showToast('Rating submitted successfully!', 'success');
-//         showRatePlayers();
-//     } catch (error) {
-//         showToast(error.message, 'error');
-//     }
-// }
-
 async function submitRating(position) {
     const isGK = position === 'GK';
-    const paramIds = isGK ? 
-        ['shotstopping','handling','reflexes','positioning','communication','distribution','aerialability','oneonone','decisionmaking','consistency'] :
-        ['pace','shooting','passing','dribbling','defending','physical','stamina','gameiq','teamwork','ballcontrol'];
+    const paramIds = isGK ?
+        ['shotstopping','handling','reflexes','positioning','communication','distribution','aerialability','oneononeability','decisionmaking','consistency'] :
+        ['pace','shooting','passing','dribbling','defending','physicality','stamina','gameiq','teamwork','ballcontrol'];
 
     let sum = 0;
     let count = 0;
-0;
     const ratingData = {
         ratedPlayerId: currentRatingPlayerId,
         ratedByPlayerId: currentUser.uid,
@@ -546,7 +432,7 @@ async function submitRating(position) {
     }
 }
 
-// ========== LEADERBOARD (with pics + clickable) ==========
+// ========== LEADERBOARD ==========
 async function showLeaderboard() {
     const content = document.getElementById('content-area');
     content.innerHTML = '<h3 style="margin-bottom:1rem;">Overall Leaderboard</h3><p style="color:var(--text-muted);">Loading rankings...</p>';
@@ -596,7 +482,6 @@ async function showLeaderboard() {
         .filter(p => p.count > 0)
         .sort((a, b) => b.average - a.average);
 
-    // Store for detail view
     window._leaderboardData = playerAverages;
 
     let html = '<h3 style="margin-bottom:1rem;">Overall Leaderboard</h3>';
@@ -628,12 +513,11 @@ async function showLeaderboard() {
     content.innerHTML = html;
 }
 
-// ========== PLAYER DETAIL PAGE ==========
+// ========== PLAYER DETAIL ==========
 async function showPlayerDetail(playerId) {
     const content = document.getElementById('content-area');
     content.innerHTML = '<p style="color:var(--text-muted);">Loading player details...</p>';
 
-    // Get player data
     let player = window._leaderboardData ? window._leaderboardData[playerId] : null;
 
     if (!player) {
@@ -645,22 +529,17 @@ async function showPlayerDetail(playerId) {
         player = { id: doc.id, ...doc.data() };
     }
 
-    // Get all ratings for this player
-    const ratingsSnap = await db.collection('ratings')
-        .where('ratedPlayerId', '==', playerId)
-        .get();
-
+    const ratingsSnap = await db.collection('ratings').where('ratedPlayerId', '==', playerId).get();
     const ratings = ratingsSnap.docs.map(d => d.data());
 
-    // Calculate averages per parameter
     const isGK = player.primaryPosition === 'GK';
     const paramKeys = isGK ?
         ['shotstopping','handling','reflexes','positioning','communication','distribution','aerialability','oneononeability','decisionmaking','consistency'] :
-        ['ballcontrol','pace','passing','dribbling','shooting','defending','physicality','stamina','gameiq','teamwork'];
+        ['pace','shooting','passing','dribbling','defending','physicality','stamina','gameiq','teamwork','ballcontrol'];
 
     const paramLabels = isGK ?
         ['Shot Stopping','Handling','Reflexes','Positioning','Communication','Distribution','Aerial Ability','One-on-One','Decision Making','Consistency'] :
-        ['Ball Control','Pace','Passing','Dribbling','Shooting','Defending','Physicality','Stamina','Game IQ','Teamwork'];
+        ['Pace','Shooting','Passing','Dribbling','Defending','Physical','Stamina','Game IQ','Teamwork','Ball Control'];
 
     const averages = {};
     paramKeys.forEach((key, i) => {
