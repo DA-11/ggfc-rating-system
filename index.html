@@ -12,7 +12,6 @@
 </head>
 <body>
     <div id="app">
-        <!-- Navigation -->
         <nav>
             <div class="nav-brand">
                 <span class="logo">⚽</span>
@@ -21,7 +20,6 @@
             <div id="nav-buttons"></div>
         </nav>
 
-        <!-- LOGIN VIEW -->
         <div id="login-view" class="section auth-card">
             <h2>Welcome back</h2>
             <p class="subtitle">Sign in to rate players and view rankings</p>
@@ -37,29 +35,14 @@
             <p class="switch-auth">Don't have an account? <a href="#" onclick="showRegisterView(); return false;">Register here</a></p>
         </div>
 
-        <!-- REGISTER VIEW -->
         <div id="register-view" class="section auth-card hidden">
             <h2>Create Account</h2>
             <p class="subtitle">Join GG FC and start rating players</p>
-
-            <div class="form-group">
-                <label>Email *</label>
-                <input type="email" id="reg-email" placeholder="you@example.com" required>
-            </div>
-            <div class="form-group">
-                <label>Password *</label>
-                <input type="password" id="reg-password" placeholder="Min 6 characters" required>
-            </div>
-            <div class="form-group">
-                <label>Full Name *</label>
-                <input type="text" id="reg-fullName" placeholder="e.g. John Smith" required>
-            </div>
-            <div class="form-group">
-                <label>Nickname <span class="optional">(optional)</span></label>
-                <input type="text" id="reg-nickname" placeholder="e.g. Johnny">
-            </div>
-            <div class="form-group">
-                <label>Preferred Foot *</label>
+            <div class="form-group"><label>Email *</label><input type="email" id="reg-email" placeholder="you@example.com" required></div>
+            <div class="form-group"><label>Password *</label><input type="password" id="reg-password" placeholder="Min 6 characters" required></div>
+            <div class="form-group"><label>Full Name *</label><input type="text" id="reg-fullName" placeholder="e.g. John Smith" required></div>
+            <div class="form-group"><label>Nickname <span class="optional">(optional)</span></label><input type="text" id="reg-nickname" placeholder="e.g. Johnny"></div>
+            <div class="form-group"><label>Preferred Foot *</label>
                 <select id="reg-preferredFoot" required>
                     <option value="">Select...</option>
                     <option value="Left">Left</option>
@@ -67,84 +50,47 @@
                     <option value="Both">Both</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label>Years Playing *</label>
-                <input type="number" id="reg-yearsPlaying" min="0" max="50" placeholder="e.g. 5" required>
-            </div>
-            <div class="form-group">
-                <label>About Me <span class="optional">(optional)</span></label>
-                <textarea id="reg-aboutMe" placeholder="Tell us about your playing style..."></textarea>
-            </div>
-            <div class="form-group">
-                <label>Positions you can play * <span class="hint">Select at least one</span></label>
-                <div id="reg-positions-container"></div>
-            </div>
-            <div class="form-group">
-                <label>Primary Position *</label>
-                <select id="reg-primaryPosition" required>
-                    <option value="">Select primary...</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Profile Picture <span class="optional">(optional)</span></label>
+            <div class="form-group"><label>Years Playing *</label><input type="number" id="reg-yearsPlaying" min="0" max="50" placeholder="e.g. 5" required></div>
+            <div class="form-group"><label>About Me <span class="optional">(optional)</span></label><textarea id="reg-aboutMe" placeholder="Tell us about your playing style..."></textarea></div>
+            <div class="form-group"><label>Positions you can play *</label><div id="reg-positions-container"></div></div>
+            <div class="form-group"><label>Primary Position *</label><select id="reg-primaryPosition" required><option value="">Select primary...</option></select></div>
+            <div class="form-group"><label>Profile Picture <span class="optional">(optional)</span></label>
                 <div class="avatar-upload">
                     <div class="avatar-preview" id="avatar-preview">⚽</div>
-                    <label class="upload-btn">
-                        Choose Image
-                        <input type="file" id="reg-profilePic" accept="image/*" onchange="previewProfilePic(event)">
-                    </label>
+                    <label class="upload-btn">Choose Image<input type="file" id="reg-profilePic" accept="image/*" onchange="previewProfilePic(event)"></label>
                 </div>
             </div>
             <button class="btn-primary full-width" onclick="register()">Create Account</button>
             <p class="switch-auth">Already have an account? <a href="#" onclick="showLoginView(); return false;">Login here</a></p>
         </div>
 
-        <!-- MAIN APP (logged in) -->
         <div id="main-app" class="hidden">
-            <div id="home-view">
+            <div id="landing-view">
                 <div id="welcome-section" class="welcome-card"></div>
-                
-                <div class="menu-buttons">
-                    <button class="btn-menu" onclick="showRatePlayers()">
-                        <span class="btn-icon">⭐</span>
-                        Rate a Player
-                    </button>
-                    <button class="btn-menu" onclick="showLeaderboard()">
-                        <span class="btn-icon">🏆</span>
-                        Leaderboard
-                    </button>
+                <div class="menu-buttons" id="home-menu-buttons">
+                    <button class="btn-menu" onclick="showRatePlayers()"><span class="btn-icon">⭐</span>Rate a Player</button>
+                    <button class="btn-menu" onclick="showLeaderboard()"><span class="btn-icon">🏆</span>Leaderboard</button>
                 </div>
-
-                <!-- Match Bulletin -->
-                <div id="match-bulletin-section" class="match-bulletin-section">
-                    <!-- Injected by JS -->
-                </div>
-
-                <!-- YouTube + WhatsApp -->
+                <div id="match-bulletin-section" class="match-bulletin-section"></div>
                 <div class="social-links">
                     <div class="youtube-section">
-                        <button class="youtube-btn" onclick="window.open('https://www.youtube.com/@GGFCBhopal', '_blank')">
-                            ▶ Watch GG FC Videos
-                        </button>
+                        <button class="youtube-btn" onclick="window.open('https://www.youtube.com/@GGFCBhopal', '_blank')">▶ Watch GG FC Videos</button>
                     </div>
                     <div class="whatsapp-section">
-                        <button class="whatsapp-btn" onclick="window.open(WHATSAPP_GROUP_URL, '_blank')">
-                            💬 Join Our WhatsApp Group
-                        </button>
+                        <button class="whatsapp-btn" onclick="window.open(WHATSAPP_GROUP_URL, '_blank')">💬 Join Our WhatsApp Group</button>
                     </div>
                 </div>
-
-                <div id="content-area" class="content-card">
-                    <!-- Rate list or Leaderboard injected here -->
+            </div>
+            <div id="page-view" class="hidden">
+                <div class="page-back-bar">
+                    <button class="secondary page-back-btn" onclick="showHome()">← Home</button>
                 </div>
+                <div id="content-area" class="content-card"></div>
             </div>
         </div>
     </div>
 
-    <!-- Toast / Popover container -->
     <div id="toast-container"></div>
-
-    <!-- Custom Confirm Modal -->
     <div id="confirm-modal" class="modal-overlay hidden">
         <div class="modal-box">
             <p id="confirm-message">Are you sure?</p>
