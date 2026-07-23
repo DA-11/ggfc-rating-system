@@ -55,16 +55,6 @@
                 <input type="text" id="reg-fullName" placeholder="e.g. John Smith" required>
             </div>
             <div class="form-group">
-                <label>Profile Picture <span class="optional">(optional)</span></label>
-                <div class="avatar-upload">
-                    <div id="avatar-preview" class="avatar-preview">
-                        <span>📷</span>
-                    </div>
-                    <input type="file" id="reg-profilePic" accept="image/*" onchange="previewProfilePic(event)">
-                    <label for="reg-profilePic" class="upload-btn">Choose Photo</label>
-                </div>
-            </div>
-            <div class="form-group">
                 <label>Nickname <span class="optional">(optional)</span></label>
                 <input type="text" id="reg-nickname" placeholder="e.g. Johnny">
             </div>
@@ -72,13 +62,13 @@
                 <label>Preferred Foot *</label>
                 <select id="reg-preferredFoot" required>
                     <option value="">Select...</option>
-                    <option value="Right">Right</option>
                     <option value="Left">Left</option>
+                    <option value="Right">Right</option>
                     <option value="Both">Both</option>
                 </select>
             </div>
             <div class="form-group">
-                <label>Years Playing Football *</label>
+                <label>Years Playing *</label>
                 <input type="number" id="reg-yearsPlaying" min="0" max="50" placeholder="e.g. 5" required>
             </div>
             <div class="form-group">
@@ -92,10 +82,19 @@
             <div class="form-group">
                 <label>Primary Position *</label>
                 <select id="reg-primaryPosition" required>
-                    <option value="">Select positions first...</option>
+                    <option value="">Select primary...</option>
                 </select>
             </div>
-
+            <div class="form-group">
+                <label>Profile Picture <span class="optional">(optional)</span></label>
+                <div class="avatar-upload">
+                    <div class="avatar-preview" id="avatar-preview">⚽</div>
+                    <label class="upload-btn">
+                        Choose Image
+                        <input type="file" id="reg-profilePic" accept="image/*" onchange="previewProfilePic(event)">
+                    </label>
+                </div>
+            </div>
             <button class="btn-primary full-width" onclick="register()">Create Account</button>
             <p class="switch-auth">Already have an account? <a href="#" onclick="showLoginView(); return false;">Login here</a></p>
         </div>
@@ -116,11 +115,23 @@
                     </button>
                 </div>
 
-                <!-- YouTube Section -->
-                <div class="youtube-section">
-                    <button class="youtube-btn" onclick="window.open('https://www.youtube.com/@GGFCBhopal', '_blank')">
-                        ▶ Watch GG FC Videos
-                    </button>
+                <!-- Match Bulletin -->
+                <div id="match-bulletin-section" class="match-bulletin-section">
+                    <!-- Injected by JS -->
+                </div>
+
+                <!-- YouTube + WhatsApp -->
+                <div class="social-links">
+                    <div class="youtube-section">
+                        <button class="youtube-btn" onclick="window.open('https://www.youtube.com/@GGFCBhopal', '_blank')">
+                            ▶ Watch GG FC Videos
+                        </button>
+                    </div>
+                    <div class="whatsapp-section">
+                        <button class="whatsapp-btn" onclick="window.open(WHATSAPP_GROUP_URL, '_blank')">
+                            💬 Join Our WhatsApp Group
+                        </button>
+                    </div>
                 </div>
 
                 <div id="content-area" class="content-card">
