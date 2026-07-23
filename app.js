@@ -63,6 +63,7 @@ auth.onAuthStateChanged(async (user) => {
         }
 
         loadWelcome();
+        renderMenuButtons();
         showRatePlayers();
     } else {
         currentUser = null;
@@ -255,6 +256,138 @@ async function loadWelcome() {
     }
 }
 
+// ========== MENU BUTTONS (Admin gets extra button) ==========
+function renderMenuButtons() {
+    const menu = document.querySelector('.menu-buttons');
+    if (!menu) return;
+
+    let adminBtn = '';
+    if (isAdmin()) {
+        adminBtn = `
+            <button class="btn-menu" onclick="showAdminRatings()" style="border-color:#ff5c7a;">
+                <span class="btn-icon">🛡️</span>
+                All Ratings
+            </button>
+        `;
+    }
+
+    menu.innerHTML = `
+        <button class="btn-menu" onclick="showRatePlayers()">
+            <span class="btn-icon">⭐</span>
+            Rate a Player
+        </button>
+        <button class="btn-menu" onclick="showLeaderboard()">
+            <span class="btn-icon">🏆</span>
+            Leaderboard
+        </button>
+        ${adminBtn}
+    `;
+}
+
+// ========== ADMIN: ALL RATINGS TABLE ==========
+async function showAdminRatings() {
+    if (!isAdmin()) {
+        showToast('Access denied. Admin only.', 'error');
+        showRatePlayers();
+        return;
+    }
+
+    const content = document.getElementById('content-area');
+    content.innerHTML = '<h3 style="margin-bottom:1rem;">All Ratings (Admin)</h3><p style="color:var(--text-muted);">Loading...</p>';
+
+    try {
+        const playersSnap = await db.collection('players').get();
+        const playerMap = {};
+        playersSnap.docs.forEach(doc => {
+            const d = doc.data();
+            playerMap[doc.id] = {
+                fullName: d.fullName || 'Unknown',
+                playerId: d.playerId || '—',
+                nickname: d.nickname || null
+            };
+        });
+
+        const ratingsSnap = await db.collection('ratings').get();
+        
+        if (ratingsSnap.empty) {
+            content.innerHTML = `
+                <h3 style="margin-bottom:1rem;">All Ratings (Admin)</h3>
+                <p style="color:var(--text-muted);">No ratings submitted yet.</p>
+            `;
+            return;
+        }
+
+        function formatParams(r) {
+            const keys = [
+                'pace','shooting','passing','dribbling','defending','physicality','stamina','gameiq','teamwork','ballcontrol',
+                'shotstopping','handling','reflexes','positioning','communication','distribution','aerialability','oneononeability','decisionmaking','consistency'
+            ];
+            const short = {
+                pace:'PAC', shooting:'SHO', passing:'PAS', dribbling:'DRI', defending:'DEF', physicality:'PHY',
+                stamina:'STA', gameiq:'IQ', teamwork:'TMW', ballcontrol:'CTR',
+                shotstopping:'STO', handling:'HAN', reflexes:'REF', positioning:'POS', communication:'COM',
+                distribution:'DIS', aerialability:'AER', oneononeability:'1v1', decisionmaking:'DEC', consistency:'CON'
+            };
+            return keys
+                .filter(k => typeof r[k] === 'number')
+                .map(k => `${short[k]||k}:${r[k]}`)
+                .join('  ');
+        }
+
+        let tableRows = '';
+        ratingsSnap.docs.forEach(doc => {
+            const r = doc.data();
+            const rated = playerMap[r.ratedPlayerId] || { fullName: 'Unknown', playerId: '—' };
+            const rater = playerMap[r.ratedByPlayerId] || { fullName: 'Unknown', playerId: '—' };
+
+            const ratedName = rated.nickname ? `${rated.fullName} (${rated.nickname})` : rated.fullName;
+            const raterName = rater.nickname ? `${rater.fullName} (${rater.nickname})` : rater.fullName;
+
+            tableRows += `
+                <tr>
+                    <td>${ratedName}</td>
+                    <td>${raterName}</td>
+                    <td>${rater.playerId}</td>
+                    <td>${r.positionRated || '—'}</td>
+                    <td class="params-cell">${formatParams(r)}</td>
+                    <td class="overall-cell">${r.overall != null ? r.overall : '—'}</td>
+                </tr>
+            `;
+        });
+
+        content.innerHTML = `
+            <h3 style="margin-bottom:0.5rem;">All Ratings (Admin)</h3>
+            <p style="color:var(--text-muted);margin-bottom:1rem;font-size:0.9rem;">
+                ${ratingsSnap.size} rating${ratingsSnap.size !== 1 ? 's' : ''} total • Visible only to admins
+            </p>
+            <div class="admin-table-wrap">
+                <table class="admin-ratings-table">
+                    <thead>
+                        <tr>
+                            <th>Rated Player</th>
+                            <th>Rated By</th>
+                            <th>Rated By ID</th>
+                            <th>Position</th>
+                            <th>Parameters</th>
+                            <th>Overall</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRows}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    } catch (error) {
+        console.error(error);
+        content.innerHTML = `
+            <h3>All Ratings (Admin)</h3>
+            <p style="color:var(--danger);">Error loading ratings: ${error.message}</p>
+            <button class="secondary" onclick="showRatePlayers()">Back</button>
+        `;
+    }
+}
+
 // ========== RATE PLAYERS VIEW ==========
 async function showRatePlayers() {
     const content = document.getElementById('content-area');
@@ -315,7 +448,6 @@ async function ratePlayer(playerId) {
         ? `<img src="${player.profilePicUrl}" alt="" style="width:64px;height:64px;border-radius:50%;object-fit:cover;">`
         : `<div style="width:64px;height:64px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:1.6rem;">⚽</div>`;
 
-    // Automatically use Primary Position
     const position = player.primaryPosition || "CM";
     const isGK = position === 'GK';
 
