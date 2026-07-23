@@ -573,7 +573,17 @@ async function showLeaderboard() {
     const allPlayers = playersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     const ratingsSnap = await db.collection('ratings').get();
-    const allRatings = ratingsSnap.docs.map(doc => doc.data());
+    // Keep only the latest rating from each rater for each player
+    const latestByPair = {};
+    ratingsSnap.docs.forEach(doc => {
+        const r = doc.data();
+        const key = `${r.ratedPlayerId}_${r.ratedByPlayerId}`;
+        const ts = r.timestamp && r.timestamp.toMillis ? r.timestamp.toMillis() : 0;
+        if (!latestByPair[key] || ts > latestByPair[key].ts) {
+            latestByPair[key] = { ...r, ts };
+        }
+    });
+    const allRatings = Object.values(latestByPair);
 
     const activeRaterIds = new Set(allPlayers.map(p => p.id));
     const playerAverages = {};
@@ -661,8 +671,21 @@ async function showPlayerDetail(playerId) {
         player = { id: doc.id, ...doc.data() };
     }
 
-    const ratingsSnap = await db.collection('ratings').where('ratedPlayerId', '==', playerId).get();
-    const ratings = ratingsSnap.docs.map(d => d.data());
+    // Get all ratings for this player, keep only latest from each rater
+    const ratingsSnap = await db.collection('ratings')
+        .where('ratedPlayerId', '==', playerId)
+        .get();
+
+    const latestByRater = {};
+    ratingsSnap.docs.forEach(doc => {
+        const r = doc.data();
+        const key = r.ratedByPlayerId;
+        const ts = r.timestamp && r.timestamp.toMillis ? r.timestamp.toMillis() : 0;
+        if (!latestByRater[key] || ts > latestByRater[key].ts) {
+            latestByRater[key] = { ...r, ts };
+        }
+    });
+    const ratings = Object.values(latestByRater);
 
     const isGK = player.primaryPosition === 'GK';
     const paramKeys = isGK ?
