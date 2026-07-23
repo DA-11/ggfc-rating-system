@@ -4,10 +4,9 @@ let players = [];
 let currentRatingPlayerId = null;
 let confirmCallback = null;
 
-// ========== ADMIN CONFIG ==========
-const ADMIN_EMAILS = [
-    'admindivyansh@verify.com'
-];
+const WHATSAPP_GROUP_URL = 'https://chat.whatsapp.com/DCJc8g1oEXl2NOBHaRnCW3';
+
+const ADMIN_EMAILS = ['admindivyansh@verify.com'];
 
 function isAdmin() {
     if (!currentUser || !currentUser.email) return false;
@@ -40,8 +39,7 @@ auth.onAuthStateChanged(async (user) => {
         document.getElementById('main-app').classList.remove('hidden');
         document.getElementById('nav-buttons').innerHTML = `
             <button class="nav-profile-btn" onclick="showEditProfile()" title="Edit Profile">👤 Profile</button>
-            <button onclick="logout()">Logout</button>
-        `;
+            <button onclick="logout()">Logout</button>`;
         const doc = await db.collection('players').doc(user.uid).get();
         if (!doc.exists || !doc.data().profileComplete) {
             showToast('Profile incomplete. Please contact admin.', 'error');
@@ -49,6 +47,7 @@ auth.onAuthStateChanged(async (user) => {
             return;
         }
         loadWelcome();
+        loadMatchBulletin();
         renderMenuButtons();
         showRatePlayers();
     } else {
@@ -64,7 +63,6 @@ function showLoginView() {
     document.getElementById('login-view').classList.remove('hidden');
     document.getElementById('register-view').classList.add('hidden');
 }
-
 function showRegisterView() {
     document.getElementById('login-view').classList.add('hidden');
     document.getElementById('register-view').classList.remove('hidden');
@@ -78,9 +76,7 @@ async function login() {
     try {
         await auth.signInWithEmailAndPassword(email, password);
         showToast('Logged in successfully', 'success');
-    } catch (error) {
-        showToast(error.message, 'error');
-    }
+    } catch (error) { showToast(error.message, 'error'); }
 }
 
 function previewProfilePic(event) {
@@ -113,8 +109,7 @@ function updateRegPrimaryOptions() {
     primarySelect.innerHTML = '<option value="">Select primary...</option>';
     checkboxes.forEach(cb => {
         const opt = document.createElement('option');
-        opt.value = cb.value;
-        opt.textContent = cb.value;
+        opt.value = cb.value; opt.textContent = cb.value;
         primarySelect.appendChild(opt);
     });
 }
@@ -144,16 +139,14 @@ async function register() {
         const fileInput = document.getElementById('reg-profilePic');
         if (fileInput && fileInput.files && fileInput.files[0]) {
             try {
-                const file = fileInput.files[0];
                 const formData = new FormData();
-                formData.append('file', file);
+                formData.append('file', fileInput.files[0]);
                 formData.append('upload_preset', 'ggfc_profiles');
                 const res = await fetch('https://api.cloudinary.com/v1_1/dfcsc86hq/image/upload', { method: 'POST', body: formData });
                 if (!res.ok) throw new Error('Cloudinary upload failed');
-                const data = await res.json();
-                profilePicUrl = data.secure_url;
-            } catch (uploadError) {
-                console.warn('Profile picture upload failed:', uploadError);
+                profilePicUrl = (await res.json()).secure_url;
+            } catch (e) {
+                console.warn(e);
                 showToast('Account created, but profile picture could not be uploaded.', 'info');
             }
         }
@@ -164,9 +157,7 @@ async function register() {
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         showToast('Registration successful! Welcome to GG FC.', 'success');
-    } catch (error) {
-        showToast(error.message, 'error');
-    }
+    } catch (error) { showToast(error.message, 'error'); }
 }
 
 async function generatePlayerId() {
@@ -182,14 +173,97 @@ async function loadWelcome() {
             ? `<img src="${profile.profilePicUrl}" alt="Profile" style="width:56px;height:56px;border-radius:50%;object-fit:cover;margin-right:1rem;">`
             : `<div style="width:56px;height:56px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-right:1rem;">⚽</div>`;
         document.getElementById('welcome-section').innerHTML = `
-            <div style="display:flex;align-items:center;">
-                ${avatarHtml}
-                <div>
-                    <h2>Welcome, ${profile.fullName}${profile.nickname ? ' (' + profile.nickname + ')' : ''}</h2>
-                    <p>Primary Position: <strong>${profile.primaryPosition || 'N/A'}</strong> • Preferred Foot: <strong>${profile.preferredFoot || 'N/A'}</strong></p>
-                </div>
-            </div>`;
+            <div style="display:flex;align-items:center;">${avatarHtml}<div>
+                <h2>Welcome, ${profile.fullName}${profile.nickname ? ' (' + profile.nickname + ')' : ''}</h2>
+                <p>Primary Position: <strong>${profile.primaryPosition || 'N/A'}</strong> • Preferred Foot: <strong>${profile.preferredFoot || 'N/A'}</strong></p>
+            </div></div>`;
     }
+}
+
+async function loadMatchBulletin() {
+    const section = document.getElementById('match-bulletin-section');
+    if (!section) return;
+    try {
+        const doc = await db.collection('config').doc('matchBulletin').get();
+        if (!doc.exists || !doc.data().title) {
+            section.innerHTML = `
+                <div class="match-bulletin-card">
+                    <div class="bulletin-empty">⚽ No upcoming match posted yet.</div>
+                    ${isAdmin() ? `<div class="bulletin-admin-actions"><button class="btn-primary" style="padding:0.5rem 1rem;font-size:0.88rem;" onclick="editMatchBulletin()">+ Create Match Bulletin</button></div>` : ''}
+                </div>`;
+            return;
+        }
+        const b = doc.data();
+        section.innerHTML = `
+            <div class="match-bulletin-card">
+                <h3>⚽ ${b.title || 'Next Match'}</h3>
+                <div class="bulletin-row"><span class="bulletin-label">Date</span><span class="bulletin-value">${b.date || '—'}</span></div>
+                <div class="bulletin-row"><span class="bulletin-label">Time</span><span class="bulletin-value">${b.time || '—'}</span></div>
+                <div class="bulletin-row"><span class="bulletin-label">Venue</span><span class="bulletin-value">${b.venue || '—'}</span></div>
+                ${b.notes ? `<div class="bulletin-notes">${b.notes}</div>` : ''}
+                ${isAdmin() ? `<div class="bulletin-admin-actions">
+                    <button class="secondary" style="padding:0.45rem 0.9rem;font-size:0.85rem;" onclick="editMatchBulletin()">Edit</button>
+                    <button class="btn-danger" style="padding:0.45rem 0.9rem;font-size:0.85rem;" onclick="deleteMatchBulletin()">Delete</button>
+                </div>` : ''}
+            </div>`;
+    } catch (error) { console.error(error); section.innerHTML = ''; }
+}
+
+async function editMatchBulletin() {
+    if (!isAdmin()) { showToast('Admin only', 'error'); return; }
+    const content = document.getElementById('content-area');
+    let existing = { title: 'Next Match', date: '', time: '', venue: '', notes: '' };
+    try {
+        const doc = await db.collection('config').doc('matchBulletin').get();
+        if (doc.exists) existing = { ...existing, ...doc.data() };
+    } catch (e) {}
+    content.innerHTML = `
+        <h3 style="margin-bottom:1.2rem;">${existing.date ? 'Edit' : 'Create'} Match Bulletin</h3>
+        <div class="form-group"><label>Match Title</label>
+            <input type="text" id="bulletin-title" value="${(existing.title || 'Next Match').replace(/"/g, '&quot;')}" placeholder="Next Match"></div>
+        <div class="form-group"><label>Date</label>
+            <input type="text" id="bulletin-date" value="${(existing.date || '').replace(/"/g, '&quot;')}" placeholder="Sunday, 26 July 2026"></div>
+        <div class="form-group"><label>Time</label>
+            <input type="text" id="bulletin-time" value="${(existing.time || '').replace(/"/g, '&quot;')}" placeholder="7:00 AM"></div>
+        <div class="form-group"><label>Venue</label>
+            <input type="text" id="bulletin-venue" value="${(existing.venue || '').replace(/"/g, '&quot;')}" placeholder="XYZ Turf"></div>
+        <div class="form-group"><label>Notes <span class="optional">(optional)</span></label>
+            <textarea id="bulletin-notes" placeholder="Please arrive 15 minutes early.">${(existing.notes || '').replace(/</g, '&lt;')}</textarea></div>
+        <div style="display:flex;gap:0.8rem;margin-top:1.2rem;">
+            <button class="btn-primary" onclick="saveMatchBulletin()">Save Bulletin</button>
+            <button class="secondary" onclick="showRatePlayers()">Cancel</button>
+        </div>`;
+}
+
+async function saveMatchBulletin() {
+    if (!isAdmin()) return;
+    const title = document.getElementById('bulletin-title').value.trim() || 'Next Match';
+    const date = document.getElementById('bulletin-date').value.trim();
+    const time = document.getElementById('bulletin-time').value.trim();
+    const venue = document.getElementById('bulletin-venue').value.trim();
+    const notes = document.getElementById('bulletin-notes').value.trim();
+    if (!date || !time || !venue) { showToast('Date, Time and Venue are required', 'error'); return; }
+    try {
+        await db.collection('config').doc('matchBulletin').set({
+            title, date, time, venue, notes: notes || null,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedBy: currentUser.uid
+        });
+        showToast('Match bulletin saved!', 'success');
+        loadMatchBulletin();
+        showRatePlayers();
+    } catch (error) { showToast(error.message, 'error'); }
+}
+
+async function deleteMatchBulletin() {
+    if (!isAdmin()) return;
+    showConfirm('Delete the current match bulletin?', async () => {
+        try {
+            await db.collection('config').doc('matchBulletin').delete();
+            showToast('Bulletin deleted', 'success');
+            loadMatchBulletin();
+        } catch (error) { showToast(error.message, 'error'); }
+    });
 }
 
 async function showEditProfile() {
@@ -209,20 +283,18 @@ async function showEditProfile() {
     });
     let primaryOptions = '<option value="">Select primary...</option>';
     (profile.positions || []).forEach(pos => {
-        const sel = pos === profile.primaryPosition ? 'selected' : '';
-        primaryOptions += `<option value="${pos}" ${sel}>${pos}</option>`;
+        primaryOptions += `<option value="${pos}" ${pos === profile.primaryPosition ? 'selected' : ''}>${pos}</option>`;
     });
     content.innerHTML = `
         <h3 style="margin-bottom:1.2rem;">Edit Profile</h3>
         <div class="form-group"><label>Full Name</label>
-            <input type="text" id="edit-fullName" value="${(profile.fullName || '').replace(/"/g, '&quot;')}" disabled style="opacity:0.6;">
+            <input type="text" value="${(profile.fullName || '').replace(/"/g, '&quot;')}" disabled style="opacity:0.6;">
             <small style="color:var(--text-muted);">Name cannot be changed</small></div>
         <div class="form-group"><label>Nickname</label>
-            <input type="text" id="edit-nickname" value="${(profile.nickname || '').replace(/"/g, '&quot;')}" placeholder="e.g. Johnny"></div>
+            <input type="text" id="edit-nickname" value="${(profile.nickname || '').replace(/"/g, '&quot;')}"></div>
         <div class="form-group"><label>About Me</label>
-            <textarea id="edit-aboutMe" placeholder="Tell us about your playing style...">${(profile.aboutMe || '').replace(/</g, '&lt;')}</textarea></div>
-        <div class="form-group"><label>Positions you can play *</label>
-            <div id="edit-positions-container">${positionsHtml}</div></div>
+            <textarea id="edit-aboutMe">${(profile.aboutMe || '').replace(/</g, '&lt;')}</textarea></div>
+        <div class="form-group"><label>Positions you can play *</label><div>${positionsHtml}</div></div>
         <div class="form-group"><label>Primary Position *</label>
             <select id="edit-primaryPosition">${primaryOptions}</select></div>
         <div style="display:flex;gap:0.8rem;margin-top:1.5rem;">
@@ -254,7 +326,7 @@ async function saveProfile() {
     try {
         await db.collection('players').doc(currentUser.uid).update({
             nickname: nickname || null, aboutMe: aboutMe || null,
-            positions: selectedPositions, primaryPosition: primaryPosition
+            positions: selectedPositions, primaryPosition
         });
         showToast('Profile updated successfully!', 'success');
         loadWelcome();
@@ -288,13 +360,13 @@ async function showAdminRatings() {
         });
         const ratingsSnap = await db.collection('ratings').get();
         if (ratingsSnap.empty) {
-            content.innerHTML = '<h3 style="margin-bottom:1rem;">All Ratings (Admin)</h3><p style="color:var(--text-muted);">No ratings submitted yet.</p>';
+            content.innerHTML = '<h3>All Ratings (Admin)</h3><p style="color:var(--text-muted);">No ratings yet.</p>';
             return;
         }
         function formatParams(r) {
             const keys = ['pace','shooting','passing','dribbling','defending','physicality','stamina','gameiq','teamwork','ballcontrol','shotstopping','handling','reflexes','positioning','communication','distribution','aerialability','oneononeability','decisionmaking','consistency'];
-            const short = { pace:'PAC',shooting:'SHO',passing:'PAS',dribbling:'DRI',defending:'DEF',physicality:'PHY',stamina:'STA',gameiq:'IQ',teamwork:'TMW',ballcontrol:'CTR',shotstopping:'STO',handling:'HAN',reflexes:'REF',positioning:'POS',communication:'COM',distribution:'DIS',aerialability:'AER',oneononeability:'1v1',decisionmaking:'DEC',consistency:'CON' };
-            return keys.filter(k => typeof r[k] === 'number').map(k => `${short[k]||k}:${r[k]}`).join('  ');
+            const short = {pace:'PAC',shooting:'SHO',passing:'PAS',dribbling:'DRI',defending:'DEF',physicality:'PHY',stamina:'STA',gameiq:'IQ',teamwork:'TMW',ballcontrol:'CTR',shotstopping:'STO',handling:'HAN',reflexes:'REF',positioning:'POS',communication:'COM',distribution:'DIS',aerialability:'AER',oneononeability:'1v1',decisionmaking:'DEC',consistency:'CON'};
+            return keys.filter(k => typeof r[k] === 'number').map(k => `${short[k]}:${r[k]}`).join('  ');
         }
         let tableRows = '';
         ratingsSnap.docs.forEach(doc => {
@@ -303,17 +375,15 @@ async function showAdminRatings() {
             const rater = playerMap[r.ratedByPlayerId] || { fullName: 'Unknown', playerId: '—' };
             const ratedName = rated.nickname ? `${rated.fullName} (${rated.nickname})` : rated.fullName;
             const raterName = rater.nickname ? `${rater.fullName} (${rater.nickname})` : rater.fullName;
-            tableRows += `<tr><td>${ratedName}</td><td>${raterName}</td><td>${rater.playerId}</td><td>${r.positionRated || '—'}</td><td class="params-cell">${formatParams(r)}</td><td class="overall-cell">${r.overall != null ? r.overall : '—'}</td></tr>`;
+            tableRows += `<tr><td>${ratedName}</td><td>${raterName}</td><td>${rater.playerId}</td><td>${r.positionRated||'—'}</td><td class="params-cell">${formatParams(r)}</td><td class="overall-cell">${r.overall!=null?r.overall:'—'}</td></tr>`;
         });
-        content.innerHTML = `
-            <h3 style="margin-bottom:0.5rem;">All Ratings (Admin)</h3>
-            <p style="color:var(--text-muted);margin-bottom:1rem;font-size:0.9rem;">${ratingsSnap.size} rating${ratingsSnap.size !== 1 ? 's' : ''} total • Visible only to admins</p>
+        content.innerHTML = `<h3 style="margin-bottom:0.5rem;">All Ratings (Admin)</h3>
+            <p style="color:var(--text-muted);margin-bottom:1rem;font-size:0.9rem;">${ratingsSnap.size} ratings total</p>
             <div class="admin-table-wrap"><table class="admin-ratings-table">
-                <thead><tr><th>Rated Player</th><th>Rated By</th><th>Rated By ID</th><th>Position</th><th>Parameters</th><th>Overall</th></tr></thead>
-                <tbody>${tableRows}</tbody>
-            </table></div>`;
+            <thead><tr><th>Rated Player</th><th>Rated By</th><th>Rated By ID</th><th>Position</th><th>Parameters</th><th>Overall</th></tr></thead>
+            <tbody>${tableRows}</tbody></table></div>`;
     } catch (error) {
-        content.innerHTML = `<h3>All Ratings (Admin)</h3><p style="color:var(--danger);">Error: ${error.message}</p><button class="secondary" onclick="showRatePlayers()">Back</button>`;
+        content.innerHTML = `<h3>All Ratings</h3><p style="color:var(--danger);">${error.message}</p>`;
     }
 }
 
@@ -363,7 +433,7 @@ async function showRatePlayers(showAll = false) {
     if (!hasPlayers) {
         container.innerHTML = showAll
             ? '<p style="color:var(--text-muted);">No other players registered yet.</p>'
-            : '<p style="color:var(--text-muted);">You have rated all players. Click <strong>Show All Players</strong> to rate someone again.</p>';
+            : '<p style="color:var(--text-muted);">You have rated all players. Click <strong>Show All Players</strong> to rate again.</p>';
     }
 }
 
@@ -375,7 +445,7 @@ async function ratePlayer(playerId) {
     const avatar = player.profilePicUrl
         ? `<img src="${player.profilePicUrl}" alt="" style="width:64px;height:64px;border-radius:50%;object-fit:cover;">`
         : `<div style="width:64px;height:64px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:1.6rem;">⚽</div>`;
-    const position = player.primaryPosition || "CM";
+    const position = player.primaryPosition || 'CM';
     const isGK = position === 'GK';
     content.innerHTML = `
         <div>
@@ -386,7 +456,7 @@ async function ratePlayer(playerId) {
                 </div>
             </div>
             <div id="rating-form"></div>
-            <div style="margin-top:1.5rem; display:flex; gap:0.8rem;">
+            <div style="margin-top:1.5rem;display:flex;gap:0.8rem;">
                 <button class="btn-primary" onclick="submitRating('${position}')">Submit Rating</button>
                 <button class="secondary" onclick="showRatePlayers()">Cancel</button>
             </div>
@@ -425,7 +495,7 @@ function loadRatingForm(isGK) {
             <div class="fifa-attr">
                 <div class="fifa-attr-name">${param.name} (${param.code})</div>
                 <div class="fifa-attr-value" id="${param.id}-value">5</div>
-                <div class="fifa-bar-container"><div class="fifa-bar-fill" id="${param.id}-bar" style="width: 50%;"></div></div>
+                <div class="fifa-bar-container"><div class="fifa-bar-fill" id="${param.id}-bar" style="width:50%;"></div></div>
             </div>
             <input type="range" class="fifa-slider" id="${param.id}" min="1" max="10" value="5" oninput="updateFifaBar('${param.id}')">`;
     });
@@ -494,11 +564,11 @@ async function showLeaderboard() {
     Object.keys(playerAverages).forEach(id => {
         const data = playerAverages[id];
         if (data.ratings.length > 0) {
-            data.average = parseFloat((data.ratings.reduce((a, b) => a + b, 0) / data.ratings.length).toFixed(1));
+            data.average = parseFloat((data.ratings.reduce((a,b)=>a+b,0) / data.ratings.length).toFixed(1));
             data.count = data.ratings.length;
         }
     });
-    const ranked = Object.values(playerAverages).filter(p => p.count > 0).sort((a, b) => b.average - a.average);
+    const ranked = Object.values(playerAverages).filter(p => p.count > 0).sort((a,b) => b.average - a.average);
     window._leaderboardData = playerAverages;
     let html = '<h3 style="margin-bottom:1rem;">Overall Leaderboard</h3>';
     if (ranked.length === 0) {
@@ -510,9 +580,9 @@ async function showLeaderboard() {
                 : `<div style="width:42px;height:42px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:1.1rem;">⚽</div>`;
             html += `<div class="player-card" style="cursor:pointer;" onclick="showPlayerDetail('${p.id}')">
                 <div style="display:flex;align-items:center;gap:0.8rem;">
-                    <span class="rank-badge">#${index + 1}</span>${avatar}
-                    <div><h3>${p.fullName}${p.nickname ? ' (' + p.nickname + ')' : ''}</h3>
-                    <small>${p.primaryPosition || ''} • ${p.count} rating${p.count > 1 ? 's' : ''}</small></div>
+                    <span class="rank-badge">#${index+1}</span>${avatar}
+                    <div><h3>${p.fullName}${p.nickname?' ('+p.nickname+')':''}</h3>
+                    <small>${p.primaryPosition||''} • ${p.count} rating${p.count>1?'s':''}</small></div>
                 </div>
                 <div class="score-value">${p.average}</div></div>`;
         });
@@ -522,7 +592,7 @@ async function showLeaderboard() {
 
 async function showPlayerDetail(playerId) {
     const content = document.getElementById('content-area');
-    content.innerHTML = '<p style="color:var(--text-muted);">Loading player details...</p>';
+    content.innerHTML = '<p style="color:var(--text-muted);">Loading...</p>';
     let player = window._leaderboardData ? window._leaderboardData[playerId] : null;
     if (!player) {
         const doc = await db.collection('players').doc(playerId).get();
@@ -548,9 +618,9 @@ async function showPlayerDetail(playerId) {
     const averages = {};
     paramKeys.forEach((key, i) => {
         const values = ratings.map(r => r[key]).filter(v => typeof v === 'number');
-        averages[paramLabels[i]] = values.length > 0 ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1) : '—';
+        averages[paramLabels[i]] = values.length > 0 ? (values.reduce((a,b)=>a+b,0)/values.length).toFixed(1) : '—';
     });
-    const overallAvg = player.average || (ratings.length > 0 ? (ratings.reduce((a, r) => a + (r.overall || 0), 0) / ratings.length).toFixed(1) : '—');
+    const overallAvg = player.average || (ratings.length > 0 ? (ratings.reduce((a,r)=>a+(r.overall||0),0)/ratings.length).toFixed(1) : '—');
     const avatar = player.profilePicUrl
         ? `<img src="${player.profilePicUrl}" alt="" style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid var(--border);">`
         : `<div style="width:90px;height:90px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:2.2rem;">⚽</div>`;
@@ -563,17 +633,17 @@ async function showPlayerDetail(playerId) {
             <button class="secondary" style="margin-bottom:1.2rem;" onclick="showLeaderboard()">← Back to Leaderboard</button>
             <div style="display:flex;align-items:center;gap:1.2rem;margin-bottom:1.5rem;">
                 ${avatar}<div>
-                    <h2 style="margin:0 0 0.3rem;">${player.fullName}${player.nickname ? ' (' + player.nickname + ')' : ''}</h2>
-                    <p style="color:var(--text-muted);margin:0;">${player.primaryPosition || 'N/A'} • ${player.preferredFoot || 'N/A'} foot${player.yearsPlaying != null ? ' • ' + player.yearsPlaying + ' yrs' : ''}</p>
+                    <h2 style="margin:0 0 0.3rem;">${player.fullName}${player.nickname?' ('+player.nickname+')':''}</h2>
+                    <p style="color:var(--text-muted);margin:0;">${player.primaryPosition||'N/A'} • ${player.preferredFoot||'N/A'} foot${player.yearsPlaying!=null?' • '+player.yearsPlaying+' yrs':''}</p>
                     <p style="margin:0.4rem 0 0;font-size:1.4rem;font-weight:700;color:var(--primary);">Overall: ${overallAvg}
-                        <span style="font-size:0.85rem;color:var(--text-muted);font-weight:400;">(${ratings.length} rating${ratings.length !== 1 ? 's' : ''})</span></p>
+                        <span style="font-size:0.85rem;color:var(--text-muted);font-weight:400;">(${ratings.length} rating${ratings.length!==1?'s':''})</span></p>
                 </div>
             </div>
-            ${player.aboutMe ? `<div style="margin-bottom:1.4rem;padding:1rem;background:var(--surface-2);border-radius:10px;"><div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.3rem;text-transform:uppercase;">About</div><p style="margin:0;line-height:1.5;">${player.aboutMe}</p></div>` : ''}
+            ${player.aboutMe?`<div style="margin-bottom:1.4rem;padding:1rem;background:var(--surface-2);border-radius:10px;"><div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.3rem;text-transform:uppercase;">About</div><p style="margin:0;line-height:1.5;">${player.aboutMe}</p></div>`:''}
             <div style="margin-bottom:1rem;"><div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem;text-transform:uppercase;">Positions</div>
-                <div style="display:flex;flex-wrap:wrap;gap:0.4rem;">${(player.positions || []).map(p => `<span style="background:var(--surface-2);border:1px solid var(--border);padding:0.3rem 0.7rem;border-radius:6px;font-size:0.85rem;">${p}${p === player.primaryPosition ? ' ★' : ''}</span>`).join('')}</div></div>
+                <div style="display:flex;flex-wrap:wrap;gap:0.4rem;">${(player.positions||[]).map(p=>`<span style="background:var(--surface-2);border:1px solid var(--border);padding:0.3rem 0.7rem;border-radius:6px;font-size:0.85rem;">${p}${p===player.primaryPosition?' ★':''}</span>`).join('')}</div></div>
             <div style="margin-top:1.5rem;"><div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.6rem;text-transform:uppercase;">Average Ratings</div>
-                ${paramsHtml || '<p style="color:var(--text-muted);">No ratings yet.</p>'}</div>
+                ${paramsHtml||'<p style="color:var(--text-muted);">No ratings yet.</p>'}</div>
         </div>`;
 }
 
