@@ -308,44 +308,7 @@ button {
 }
 
 #rating-form div {
-    margin: 1rem 0;
-}
-
-#rating-form label {
-    margin-bottom: 0.4rem;
-    text-transform: none;
-    letter-spacing: 0;
-    font-size: 0.95rem;
-    color: var(--text);
-}
-
-input[type="range"] {
-    width: 75%;
-    height: 6px;
-    -webkit-appearance: none;
-    background: var(--border);
-    border-radius: 4px;
-    outline: none;
-    vertical-align: middle;
-}
-
-input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 18px;
-    height: 18px;
-    background: var(--primary);
-    border-radius: 50%;
-    cursor: pointer;
-    box-shadow: 0 2px 6px rgba(79,140,255,0.4);
-}
-
-#rating-form span {
-    display: inline-block;
-    min-width: 28px;
-    text-align: center;
-    font-weight: 700;
-    color: var(--primary);
-    margin-left: 0.6rem;
+    margin: 0;
 }
 
 .welcome-card h2 {
@@ -496,7 +459,6 @@ input[type="range"]::-webkit-slider-thumb {
     color: var(--primary);
 }
 
-/* Custom Modal */
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -538,36 +500,16 @@ input[type="range"]::-webkit-slider-thumb {
     background: #e04a66 !important;
 }
 
-@media (max-width: 600px) {
-    .section, .content-card, .welcome-card {
-        margin: 1rem;
-        padding: 1.25rem;
-    }
-    .menu-buttons {
-        flex-direction: column;
-        padding: 0 1rem;
-    }
-    nav h1 { font-size: 1.1rem; }
-    #toast-container {
-        left: 1rem;
-        right: 1rem;
-        top: auto;
-        bottom: 1.2rem;
-    }
-    .toast { min-width: auto; width: 100%; }
-    input[type="range"] { width: 65%; }
-}
-
 /* ========== FIFA STYLE RATING BARS ========== */
 .fifa-attr {
     display: flex;
     align-items: center;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     gap: 12px;
 }
 
 .fifa-attr-name {
-    width: 140px;
+    width: 145px;
     font-size: 0.95rem;
     font-weight: 500;
     color: #e8eaed;
@@ -587,7 +529,6 @@ input[type="range"]::-webkit-slider-thumb {
     background: #2a2e3d;
     border-radius: 6px;
     overflow: hidden;
-    position: relative;
 }
 
 .fifa-bar-fill {
@@ -597,11 +538,10 @@ input[type="range"]::-webkit-slider-thumb {
     transition: width 0.15s ease;
 }
 
-/* Make the slider thinner and cleaner */
 .fifa-slider {
     width: 100%;
     height: 6px;
-    margin: 2px 0 16px 0;
+    margin: 2px 0 14px 0;
     -webkit-appearance: none;
     appearance: none;
     background: #2a2e3d;
@@ -617,6 +557,7 @@ input[type="range"]::-webkit-slider-thumb {
     border-radius: 50%;
     cursor: pointer;
     border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
 }
 
 .fifa-slider::-moz-range-thumb {
@@ -626,4 +567,51 @@ input[type="range"]::-webkit-slider-thumb {
     border-radius: 50%;
     cursor: pointer;
     border: 2px solid #fff;
+}
+
+/* YouTube Section */
+.youtube-section {
+    max-width: 640px;
+    margin: 0 auto 1.5rem;
+    padding: 0 0.5rem;
+}
+
+.youtube-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.7rem;
+    padding: 1.1rem;
+    background: #ff0000;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.youtube-btn:hover {
+    background: #cc0000;
+}
+
+@media (max-width: 600px) {
+    .section, .content-card, .welcome-card {
+        margin: 1rem;
+        padding: 1.25rem;
+    }
+    .menu-buttons {
+        flex-direction: column;
+        padding: 0 1rem;
+    }
+    nav h1 { font-size: 1.1rem; }
+    #toast-container {
+        left: 1rem;
+        right: 1rem;
+        top: auto;
+        bottom: 1.2rem;
+    }
+    .toast { min-width: auto; width: 100%; }
 }
