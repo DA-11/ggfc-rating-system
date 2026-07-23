@@ -5,7 +5,6 @@ let currentRatingPlayerId = null;
 let confirmCallback = null;
 
 const WHATSAPP_GROUP_URL = 'https://chat.whatsapp.com/DCJc8g1oEXl2NOBHaRnCW3';
-
 const ADMIN_EMAILS = ['admindivyansh@verify.com'];
 
 function isAdmin() {
@@ -49,7 +48,7 @@ auth.onAuthStateChanged(async (user) => {
         loadWelcome();
         loadMatchBulletin();
         renderMenuButtons();
-        showRatePlayers();
+        showHome();
     } else {
         currentUser = null;
         document.getElementById('login-view').classList.remove('hidden');
@@ -67,6 +66,22 @@ function showRegisterView() {
     document.getElementById('login-view').classList.add('hidden');
     document.getElementById('register-view').classList.remove('hidden');
     renderRegisterPositions();
+}
+
+function showHome() {
+    const landing = document.getElementById('landing-view');
+    const page = document.getElementById('page-view');
+    if (landing) landing.classList.remove('hidden');
+    if (page) page.classList.add('hidden');
+    loadWelcome();
+    loadMatchBulletin();
+}
+
+function showPageView() {
+    const landing = document.getElementById('landing-view');
+    const page = document.getElementById('page-view');
+    if (landing) landing.classList.add('hidden');
+    if (page) page.classList.remove('hidden');
 }
 
 async function login() {
@@ -166,14 +181,15 @@ async function generatePlayerId() {
 }
 
 async function loadWelcome() {
+    const el = document.getElementById('welcome-section');
+    if (!el) return;
     const doc = await db.collection('players').doc(currentUser.uid).get();
     if (doc.exists) {
         const profile = doc.data();
         const avatarHtml = profile.profilePicUrl
             ? `<img src="${profile.profilePicUrl}" alt="Profile" style="width:56px;height:56px;border-radius:50%;object-fit:cover;margin-right:1rem;">`
             : `<div style="width:56px;height:56px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-right:1rem;">⚽</div>`;
-        document.getElementById('welcome-section').innerHTML = `
-            <div style="display:flex;align-items:center;">${avatarHtml}<div>
+        el.innerHTML = `<div style="display:flex;align-items:center;">${avatarHtml}<div>
                 <h2>Welcome, ${profile.fullName}${profile.nickname ? ' (' + profile.nickname + ')' : ''}</h2>
                 <p>Primary Position: <strong>${profile.primaryPosition || 'N/A'}</strong> • Preferred Foot: <strong>${profile.preferredFoot || 'N/A'}</strong></p>
             </div></div>`;
@@ -186,16 +202,14 @@ async function loadMatchBulletin() {
     try {
         const doc = await db.collection('config').doc('matchBulletin').get();
         if (!doc.exists || !doc.data().title) {
-            section.innerHTML = `
-                <div class="match-bulletin-card">
+            section.innerHTML = `<div class="match-bulletin-card">
                     <div class="bulletin-empty">⚽ No upcoming match posted yet.</div>
                     ${isAdmin() ? `<div class="bulletin-admin-actions"><button class="btn-primary" style="padding:0.5rem 1rem;font-size:0.88rem;" onclick="editMatchBulletin()">+ Create Match Bulletin</button></div>` : ''}
                 </div>`;
             return;
         }
         const b = doc.data();
-        section.innerHTML = `
-            <div class="match-bulletin-card">
+        section.innerHTML = `<div class="match-bulletin-card">
                 <h3>⚽ ${b.title || 'Next Match'}</h3>
                 <div class="bulletin-row"><span class="bulletin-label">Date</span><span class="bulletin-value">${b.date || '—'}</span></div>
                 <div class="bulletin-row"><span class="bulletin-label">Time</span><span class="bulletin-value">${b.time || '—'}</span></div>
@@ -211,14 +225,14 @@ async function loadMatchBulletin() {
 
 async function editMatchBulletin() {
     if (!isAdmin()) { showToast('Admin only', 'error'); return; }
+    showPageView();
     const content = document.getElementById('content-area');
     let existing = { title: 'Next Match', date: '', time: '', venue: '', notes: '' };
     try {
         const doc = await db.collection('config').doc('matchBulletin').get();
         if (doc.exists) existing = { ...existing, ...doc.data() };
     } catch (e) {}
-    content.innerHTML = `
-        <h3 style="margin-bottom:1.2rem;">${existing.date ? 'Edit' : 'Create'} Match Bulletin</h3>
+    content.innerHTML = `<h3 style="margin-bottom:1.2rem;">${existing.date ? 'Edit' : 'Create'} Match Bulletin</h3>
         <div class="form-group"><label>Match Title</label>
             <input type="text" id="bulletin-title" value="${(existing.title || 'Next Match').replace(/"/g, '&quot;')}" placeholder="Next Match"></div>
         <div class="form-group"><label>Date</label>
@@ -231,7 +245,7 @@ async function editMatchBulletin() {
             <textarea id="bulletin-notes" placeholder="Please arrive 15 minutes early.">${(existing.notes || '').replace(/</g, '&lt;')}</textarea></div>
         <div style="display:flex;gap:0.8rem;margin-top:1.2rem;">
             <button class="btn-primary" onclick="saveMatchBulletin()">Save Bulletin</button>
-            <button class="secondary" onclick="showRatePlayers()">Cancel</button>
+            <button class="secondary" onclick="showHome()">Cancel</button>
         </div>`;
 }
 
@@ -250,8 +264,7 @@ async function saveMatchBulletin() {
             updatedBy: currentUser.uid
         });
         showToast('Match bulletin saved!', 'success');
-        loadMatchBulletin();
-        showRatePlayers();
+        showHome();
     } catch (error) { showToast(error.message, 'error'); }
 }
 
@@ -267,6 +280,7 @@ async function deleteMatchBulletin() {
 }
 
 async function showEditProfile() {
+    showPageView();
     const content = document.getElementById('content-area');
     content.innerHTML = '<p style="color:var(--text-muted);">Loading profile...</p>';
     const doc = await db.collection('players').doc(currentUser.uid).get();
@@ -285,8 +299,7 @@ async function showEditProfile() {
     (profile.positions || []).forEach(pos => {
         primaryOptions += `<option value="${pos}" ${pos === profile.primaryPosition ? 'selected' : ''}>${pos}</option>`;
     });
-    content.innerHTML = `
-        <h3 style="margin-bottom:1.2rem;">Edit Profile</h3>
+    content.innerHTML = `<h3 style="margin-bottom:1.2rem;">Edit Profile</h3>
         <div class="form-group"><label>Full Name</label>
             <input type="text" value="${(profile.fullName || '').replace(/"/g, '&quot;')}" disabled style="opacity:0.6;">
             <small style="color:var(--text-muted);">Name cannot be changed</small></div>
@@ -299,7 +312,7 @@ async function showEditProfile() {
             <select id="edit-primaryPosition">${primaryOptions}</select></div>
         <div style="display:flex;gap:0.8rem;margin-top:1.5rem;">
             <button class="btn-primary" onclick="saveProfile()">Save Changes</button>
-            <button class="secondary" onclick="showRatePlayers()">Cancel</button>
+            <button class="secondary" onclick="showHome()">Cancel</button>
         </div>`;
 }
 
@@ -329,13 +342,12 @@ async function saveProfile() {
             positions: selectedPositions, primaryPosition
         });
         showToast('Profile updated successfully!', 'success');
-        loadWelcome();
-        showRatePlayers();
+        showHome();
     } catch (error) { showToast(error.message, 'error'); }
 }
 
 function renderMenuButtons() {
-    const menu = document.querySelector('.menu-buttons');
+    const menu = document.getElementById('home-menu-buttons') || document.querySelector('.menu-buttons');
     if (!menu) return;
     let adminBtn = '';
     if (isAdmin()) {
@@ -348,7 +360,8 @@ function renderMenuButtons() {
 }
 
 async function showAdminRatings() {
-    if (!isAdmin()) { showToast('Access denied. Admin only.', 'error'); showRatePlayers(); return; }
+    if (!isAdmin()) { showToast('Access denied. Admin only.', 'error'); showHome(); return; }
+    showPageView();
     const content = document.getElementById('content-area');
     content.innerHTML = '<h3 style="margin-bottom:1rem;">All Ratings (Admin)</h3><p style="color:var(--text-muted);">Loading...</p>';
     try {
@@ -383,7 +396,7 @@ async function showAdminRatings() {
             <thead><tr><th>Rated Player</th><th>Rated By</th><th>Rated By ID</th><th>Position</th><th>Parameters</th><th>Overall</th></tr></thead>
             <tbody>${tableRows}</tbody></table></div>`;
     } catch (error) {
-        content.innerHTML = `<h3>All Ratings</h3><p style="color:var(--danger);">${error.message}</p>`;
+        content.innerHTML = `<h3>All Ratings</h3><p style="color:var(--danger);">${error.message}</p><button class="secondary" onclick="showHome()">Back</button>`;
     }
 }
 
@@ -391,6 +404,7 @@ let showAllPlayersFlag = false;
 
 async function showRatePlayers(showAll = false) {
     showAllPlayersFlag = showAll;
+    showPageView();
     const content = document.getElementById('content-area');
     content.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.6rem;">
@@ -447,8 +461,7 @@ async function ratePlayer(playerId) {
         : `<div style="width:64px;height:64px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:1.6rem;">⚽</div>`;
     const position = player.primaryPosition || 'CM';
     const isGK = position === 'GK';
-    content.innerHTML = `
-        <div>
+    content.innerHTML = `<div>
             <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;">
                 ${avatar}<div>
                     <h2 style="margin:0;">Rate ${player.fullName}${player.nickname ? ' (' + player.nickname + ')' : ''}</h2>
@@ -491,8 +504,7 @@ function loadRatingForm(isGK) {
     ];
     let formHTML = '';
     params.forEach(param => {
-        formHTML += `
-            <div class="fifa-attr">
+        formHTML += `<div class="fifa-attr">
                 <div class="fifa-attr-name">${param.name} (${param.code})</div>
                 <div class="fifa-attr-value" id="${param.id}-value">5</div>
                 <div class="fifa-bar-container"><div class="fifa-bar-fill" id="${param.id}-bar" style="width:50%;"></div></div>
@@ -534,6 +546,7 @@ async function submitRating(position) {
 }
 
 async function showLeaderboard() {
+    showPageView();
     const content = document.getElementById('content-area');
     content.innerHTML = '<h3 style="margin-bottom:1rem;">Overall Leaderboard</h3><p style="color:var(--text-muted);">Loading rankings...</p>';
     const playersSnap = await db.collection('players').where('isActive', '==', true).get();
@@ -628,8 +641,7 @@ async function showPlayerDetail(playerId) {
     Object.entries(averages).forEach(([label, val]) => {
         paramsHtml += `<div style="display:flex;justify-content:space-between;padding:0.45rem 0;border-bottom:1px solid var(--border);"><span style="color:var(--text-muted);">${label}</span><strong style="color:var(--primary);">${val}</strong></div>`;
     });
-    content.innerHTML = `
-        <div>
+    content.innerHTML = `<div>
             <button class="secondary" style="margin-bottom:1.2rem;" onclick="showLeaderboard()">← Back to Leaderboard</button>
             <div style="display:flex;align-items:center;gap:1.2rem;margin-bottom:1.5rem;">
                 ${avatar}<div>
